@@ -34,8 +34,8 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Export ClockSize type: 'small' | 'medium' | 'large'
     - _Requirements: 10.4_
 
-- [ ] 2. Implement WASM tick detector
-  - [ ] 2.1 Create AssemblyScript tick detection module
+- [-] 2. Implement WASM tick detector
+  - [x] 2.1 Create AssemblyScript tick detection module
     - Create assembly/tick-detector.ts with exported functions: detectTick, calculateRMS, applyHighPassFilter
     - Implement RMS calculation for audio samples
     - Implement high-pass filter with ~500Hz cutoff
@@ -43,18 +43,18 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Configure AssemblyScript build in package.json
     - _Requirements: 4.1, 4.2, 4.5, 10.3_
   
-  - [ ]* 2.2 Write unit tests for WASM functions
+  - [x]* 2.2 Write unit tests for WASM functions
     - Test RMS calculation with known audio samples
     - Test high-pass filter with various frequencies
     - Test threshold detection with samples above/below threshold
     - _Requirements: 4.1, 4.2_
   
-  - [ ]* 2.3 Write property test for WASM tick detection
+  - [x]* 2.3 Write property test for WASM tick detection
     - **Property 10: Threshold-based tick identification**
     - **Validates: Requirements 4.1**
     - Test that samples exceeding threshold are identified as ticks
   
-  - [ ]* 2.4 Write property test for noise filtering
+  - [x]* 2.4 Write property test for noise filtering
     - **Property 11: Sensitivity-based noise filtering**
     - **Validates: Requirements 4.2**
     - Test that samples below sensitivity threshold are filtered out
