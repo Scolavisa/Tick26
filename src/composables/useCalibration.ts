@@ -13,7 +13,9 @@
  */
 
 import { ref, computed, type Ref } from 'vue';
-import type { ClockSize, CalibrationSettings } from '../types';
+import type { ClockSize, CalibrationSettings, ErrorInfo } from '../types';
+import { ErrorCode } from '../types';
+import { logError, createErrorFromCode } from '../utils/errors';
 
 // Singleton state - shared across all component instances
 let isSharedStateInitialized = false;
@@ -24,15 +26,20 @@ const sensitivity: Ref<number> = ref(1.0);
 const threshold: Ref<number> = ref(0.05);
 const isCalibrating: Ref<boolean> = ref(false);
 const calibrationProgress: Ref<number> = ref(0);
+const currentError: Ref<ErrorInfo | null> = ref(null);
 
 // Calibration sample collection
 let tickSamples: number[] = [];
+let calibrationTimeoutId: number | null = null;
 
 // localStorage key for calibration persistence
 const STORAGE_KEY = 'tick-tack-calibration';
 
 // Minimum ticks required for calibration completion
 const MIN_TICKS_FOR_CALIBRATION = 10;
+
+// Calibration timeout in milliseconds (30 seconds)
+const CALIBRATION_TIMEOUT_MS = 30000;
 
 /**
  * Load calibration settings from localStorage
@@ -84,9 +91,10 @@ export function useCalibration() {
 
   /**
    * Start the calibration process
-   * Validates: Requirement 2.3
+   * Validates: Requirements 2.3, 12.4
    * 
    * Begins collecting tick samples for analysis
+   * Sets a 30-second timeout for calibration
    */
   const startCalibration = (): void => {
     if (isCalibrating.value) {
@@ -94,10 +102,26 @@ export function useCalibration() {
       return;
     }
 
+    // Clear any previous errors
+    currentError.value = null;
+
     // Reset calibration state
     isCalibrating.value = true;
     calibrationProgress.value = 0;
     tickSamples = [];
+    
+    // Set timeout for calibration (Requirement 12.4)
+    calibrationTimeoutId = window.setTimeout(() => {
+      if (isCalibrating.value && tickSamples.length === 0) {
+        // No ticks detected within timeout period
+        const errorInfo = createErrorFromCode(ErrorCode.CALIBRATION_TIMEOUT);
+        logError(errorInfo);
+        currentError.value = errorInfo;
+        
+        // Stop calibration
+        stopCalibration();
+      }
+    }, CALIBRATION_TIMEOUT_MS);
   };
 
   /**
@@ -124,6 +148,12 @@ export function useCalibration() {
       return;
     }
 
+    // Clear timeout
+    if (calibrationTimeoutId !== null) {
+      window.clearTimeout(calibrationTimeoutId);
+      calibrationTimeoutId = null;
+    }
+
     isCalibrating.value = false;
     calibrationProgress.value = 0;
     tickSamples = [];
@@ -131,7 +161,7 @@ export function useCalibration() {
 
   /**
    * Complete the calibration process
-   * Validates: Requirement 2.3
+   * Validates: Requirements 2.3, 12.3
    * 
    * Analyzes collected samples and calculates sensitivity/threshold
    * 
@@ -143,9 +173,18 @@ export function useCalibration() {
       return false;
     }
 
-    // Validate minimum tick count
+    // Clear timeout
+    if (calibrationTimeoutId !== null) {
+      window.clearTimeout(calibrationTimeoutId);
+      calibrationTimeoutId = null;
+    }
+
+    // Validate minimum tick count (Requirement 12.3)
     if (tickSamples.length < MIN_TICKS_FOR_CALIBRATION) {
       console.warn(`Insufficient samples: ${tickSamples.length} < ${MIN_TICKS_FOR_CALIBRATION}`);
+      
+      // Don't create an error for this - just return false
+      // The UI should handle this by showing the current count and required count
       return false;
     }
 
@@ -217,12 +256,19 @@ export function useCalibration() {
    * Reset calibration settings to defaults
    */
   const resetCalibration = (): void => {
+    // Clear timeout if active
+    if (calibrationTimeoutId !== null) {
+      window.clearTimeout(calibrationTimeoutId);
+      calibrationTimeoutId = null;
+    }
+    
     clockSize.value = 'medium';
     sensitivity.value = 1.0;
     threshold.value = 0.05;
     isCalibrating.value = false;
     calibrationProgress.value = 0;
     tickSamples = [];
+    currentError.value = null;
 
     // Clear from localStorage
     try {
@@ -266,6 +312,13 @@ export function useCalibration() {
     }
   };
 
+  /**
+   * Clear the current error
+   */
+  const clearError = (): void => {
+    currentError.value = null;
+  };
+
   // Return reactive state and methods
   return {
     // State
@@ -276,6 +329,7 @@ export function useCalibration() {
     calibrationProgress,
     isCalibrated,
     hasEnoughSamples,
+    currentError,
     
     // Methods
     setClockSize,
@@ -286,6 +340,7 @@ export function useCalibration() {
     saveCalibration,
     loadCalibration,
     resetCalibration,
-    getExpectedFrequency
+    getExpectedFrequency,
+    clearError
   };
 }

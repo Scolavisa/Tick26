@@ -13,7 +13,9 @@
 
 import { ref, type Ref } from 'vue';
 import { AudioManager } from '../audio/AudioManager';
-import type { TickEvent } from '../types';
+import type { TickEvent, ErrorInfo } from '../types';
+import { ErrorCode } from '../types';
+import { logError, createErrorFromCode } from '../utils/errors';
 
 // Singleton state - shared across all component instances
 let audioManagerInstance: AudioManager | null = null;
@@ -25,6 +27,7 @@ const selectedDevice: Ref<string | null> = ref(null);
 const availableDevices: Ref<MediaDeviceInfo[]> = ref([]);
 const isInitialized: Ref<boolean> = ref(false);
 const permissionGranted: Ref<boolean> = ref(false);
+const currentError: Ref<ErrorInfo | null> = ref(null);
 
 // localStorage key for device persistence
 const STORAGE_KEY = 'tick-tack-microphone';
@@ -55,12 +58,15 @@ export function useAudio() {
 
   /**
    * Request microphone permission
-   * Validates: Requirement 8.1
+   * Validates: Requirement 8.1, 8.2
    * 
    * @returns Promise<boolean> - true if permission granted, false otherwise
    */
   const requestPermission = async (): Promise<boolean> => {
     try {
+      // Clear any previous errors
+      currentError.value = null;
+      
       // Request microphone access with basic constraints
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
@@ -74,9 +80,20 @@ export function useAudio() {
       
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-          console.error('Microphone permission denied by user');
+          // Handle microphone permission denied (Requirement 8.2)
+          const errorInfo = createErrorFromCode(ErrorCode.MICROPHONE_PERMISSION_DENIED);
+          logError(errorInfo);
+          currentError.value = errorInfo;
+        } else if (error.name === 'NotFoundError') {
+          // No microphone found
+          const errorInfo = createErrorFromCode(ErrorCode.MICROPHONE_ACCESS_FAILED);
+          logError(errorInfo);
+          currentError.value = errorInfo;
         } else {
-          console.error('Failed to request microphone permission:', error.message);
+          // Other microphone access failures
+          const errorInfo = createErrorFromCode(ErrorCode.MICROPHONE_ACCESS_FAILED);
+          logError(errorInfo);
+          currentError.value = errorInfo;
         }
       }
       
@@ -109,12 +126,15 @@ export function useAudio() {
 
   /**
    * Select and activate a specific microphone device
-   * Validates: Requirements 1.2, 1.5
+   * Validates: Requirements 1.2, 1.5, 14.1
    * 
    * @param deviceId - The device ID to select and activate
    */
   const selectDevice = async (deviceId: string): Promise<void> => {
     try {
+      // Clear any previous errors
+      currentError.value = null;
+      
       const manager = getAudioManager();
       
       // If already initialized, clean up first
@@ -145,6 +165,11 @@ export function useAudio() {
       isInitialized.value = false;
       selectedDevice.value = null;
       
+      // Handle microphone access failure (Requirement 14.1)
+      const errorInfo = createErrorFromCode(ErrorCode.MICROPHONE_ACCESS_FAILED);
+      logError(errorInfo);
+      currentError.value = errorInfo;
+      
       if (error instanceof Error) {
         throw new Error(`Failed to select device: ${error.message}`);
       }
@@ -155,11 +180,15 @@ export function useAudio() {
   /**
    * Initialize the AudioWorklet processor
    * Must be called after device selection and before starting processing
+   * Validates: Requirements 14.2, 14.3
    * 
    * @throws Error if initialization fails
    */
   const initializeWorklet = async (): Promise<void> => {
     try {
+      // Clear any previous errors
+      currentError.value = null;
+      
       const manager = getAudioManager();
       
       if (!isInitialized.value) {
@@ -167,10 +196,39 @@ export function useAudio() {
       }
       
       // Load the AudioWorklet processor
-      await manager.loadWorklet();
+      try {
+        await manager.loadWorklet();
+      } catch (error) {
+        // Handle AudioWorklet initialization failure (Requirement 14.2)
+        const errorInfo = createErrorFromCode(ErrorCode.AUDIOWORKLET_INIT_FAILED);
+        logError(errorInfo);
+        currentError.value = errorInfo;
+        throw error;
+      }
       
-      // Load the WASM module
-      await manager.loadWasm();
+      // Load the WASM module with retry logic (Requirement 14.3)
+      let wasmLoadAttempts = 0;
+      const maxWasmAttempts = 2;
+      
+      while (wasmLoadAttempts < maxWasmAttempts) {
+        try {
+          await manager.loadWasm();
+          break; // Success, exit retry loop
+        } catch (error) {
+          wasmLoadAttempts++;
+          
+          if (wasmLoadAttempts >= maxWasmAttempts) {
+            // Handle WASM load failure after retries (Requirement 14.3)
+            const errorInfo = createErrorFromCode(ErrorCode.WASM_LOAD_FAILED);
+            logError(errorInfo);
+            currentError.value = errorInfo;
+            throw error;
+          }
+          
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
       
     } catch (error) {
       if (error instanceof Error) {
@@ -183,6 +241,7 @@ export function useAudio() {
   /**
    * Start audio processing
    * Begins capturing and processing audio from the selected microphone
+   * Validates: Requirement 8.4
    * 
    * @throws Error if audio system is not fully initialized
    */
@@ -193,7 +252,42 @@ export function useAudio() {
       throw new Error('Audio system not initialized. Call selectDevice() first.');
     }
     
+    // Monitor for permission revocation during operation (Requirement 8.4)
+    if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+      navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+    }
+    
     manager.start();
+  };
+  
+  /**
+   * Handle device changes (including permission revocation)
+   * Validates: Requirement 8.4
+   */
+  const handleDeviceChange = async () => {
+    // Check if we still have permission
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices.filter(d => d.kind === 'audioinput');
+      
+      // If we had a selected device but it's no longer available
+      if (selectedDevice.value && !audioInputs.find(d => d.deviceId === selectedDevice.value)) {
+        // Permission may have been revoked or device disconnected
+        stopProcessing();
+        
+        const errorInfo = createErrorFromCode(ErrorCode.MICROPHONE_ACCESS_FAILED);
+        logError(errorInfo);
+        currentError.value = errorInfo;
+      }
+    } catch (error) {
+      // Permission was revoked
+      stopProcessing();
+      permissionGranted.value = false;
+      
+      const errorInfo = createErrorFromCode(ErrorCode.MICROPHONE_PERMISSION_DENIED);
+      logError(errorInfo);
+      currentError.value = errorInfo;
+    }
   };
 
   /**
@@ -201,6 +295,11 @@ export function useAudio() {
    * Stops capturing and processing audio but keeps resources allocated
    */
   const stopProcessing = (): void => {
+    // Remove device change listener
+    if (navigator.mediaDevices && navigator.mediaDevices.removeEventListener) {
+      navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+    }
+    
     if (audioManagerInstance) {
       audioManagerInstance.stop();
     }
@@ -211,6 +310,11 @@ export function useAudio() {
    * Stops processing, closes streams, and releases AudioContext
    */
   const cleanup = (): void => {
+    // Remove device change listener
+    if (navigator.mediaDevices && navigator.mediaDevices.removeEventListener) {
+      navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+    }
+    
     if (audioManagerInstance) {
       audioManagerInstance.cleanup();
       audioManagerInstance = null;
@@ -219,6 +323,7 @@ export function useAudio() {
     // Reset reactive state
     audioContext.value = null;
     isInitialized.value = false;
+    currentError.value = null;
     // Keep selectedDevice and permissionGranted for persistence
   };
 
@@ -259,6 +364,13 @@ export function useAudio() {
     };
   };
 
+  /**
+   * Clear the current error
+   */
+  const clearError = (): void => {
+    currentError.value = null;
+  };
+
   // Return reactive state and methods
   return {
     // State
@@ -267,6 +379,7 @@ export function useAudio() {
     availableDevices,
     isInitialized,
     permissionGranted,
+    currentError,
     
     // Methods
     requestPermission,
@@ -278,6 +391,7 @@ export function useAudio() {
     cleanup,
     onTickDetected,
     setCalibration,
-    getState
+    getState,
+    clearError
   };
 }
