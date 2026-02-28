@@ -372,7 +372,7 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - **Validates: Requirements 4.3**
     - Test that confirmed tick events notify counter
 
-- [ ] 15. Checkpoint - Core functionality complete
+- [x] 15. Checkpoint - Core functionality complete
   - Manually test full workflow: Settings → Calibration → Measurement
   - Test microphone selection and permission flow
   - Test calibration with different clock sizes
@@ -406,18 +406,18 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Implement action buttons (Retry, Learn More)
     - _Requirements: 14.1, 14.2, 14.3_
   
-  - [ ]* 16.5 Write unit tests for error handling
+  - [ ] 16.5 Write unit tests for error handling
     - Test error logging
     - Test error display component
     - Test specific error scenarios
     - _Requirements: 14.1, 14.2, 14.3, 14.4_
   
-  - [ ]* 16.6 Write property test for error logging
+  - [ ] 16.6 Write property test for error logging
     - **Property 20: Error logging**
     - **Validates: Requirements 14.4**
     - Test that errors are logged to console/tracking system
   
-  - [ ]* 16.7 Write property test for graceful degradation
+  - [ ] 16.7 Write property test for graceful degradation
     - **Property 21: Graceful degradation**
     - **Validates: Requirements 14.5**
     - Test that non-critical failures don't stop app operation

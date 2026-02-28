@@ -91,6 +91,8 @@ const {
   calibrationProgress,
   hasEnoughSamples,
   isCalibrated,
+  sensitivity,
+  threshold,
   setClockSize,
   startCalibration,
   stopCalibration,
@@ -102,6 +104,7 @@ const {
   isInitialized,
   permissionGranted,
   onTickDetected,
+  setCalibration,
   initializeWorklet,
   startProcessing,
   stopProcessing
@@ -225,6 +228,10 @@ const handleTickDetected = (event: TickEvent) => {
     stopProcessing();
     
     if (success) {
+      // Send calibration settings to AudioManager
+      setCalibration(sensitivity.value, threshold.value);
+      console.log('Calibration complete:', { sensitivity: sensitivity.value, threshold: threshold.value });
+      
       statusMessage.value = 'Calibration completed successfully! You can now proceed to measurement.';
       statusMessageType.value = 'success';
     } else {

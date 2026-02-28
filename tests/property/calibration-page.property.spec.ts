@@ -24,6 +24,8 @@ const mockIsCalibrating = ref(false);
 const mockCalibrationProgress = ref(0);
 const mockHasEnoughSamples = ref(false);
 const mockIsCalibrated = ref(false);
+const mockSensitivity = ref(1.0);
+const mockThreshold = ref(0.05);
 
 const mockIsInitialized = ref(true);
 const mockPermissionGranted = ref(true);
@@ -36,6 +38,7 @@ const mockRecordTickSample = vi.fn();
 
 const mockOnTickDetected = vi.fn();
 const mockSetCalibration = vi.fn();
+const mockInitializeWorklet = vi.fn();
 const mockStartProcessing = vi.fn();
 const mockStopProcessing = vi.fn();
 
@@ -46,6 +49,8 @@ vi.mock('../../src/composables/useCalibration', () => ({
     calibrationProgress: mockCalibrationProgress,
     hasEnoughSamples: mockHasEnoughSamples,
     isCalibrated: mockIsCalibrated,
+    sensitivity: mockSensitivity,
+    threshold: mockThreshold,
     setClockSize: mockSetClockSize,
     startCalibration: mockStartCalibration,
     stopCalibration: mockStopCalibration,
@@ -60,6 +65,7 @@ vi.mock('../../src/composables/useAudio', () => ({
     permissionGranted: mockPermissionGranted,
     onTickDetected: mockOnTickDetected,
     setCalibration: mockSetCalibration,
+    initializeWorklet: mockInitializeWorklet,
     startProcessing: mockStartProcessing,
     stopProcessing: mockStopProcessing
   })

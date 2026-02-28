@@ -256,7 +256,7 @@ describe('AudioManager', () => {
       const workletNode = (audioManager as any).workletNode;
       expect(workletNode.port.postMessage).toHaveBeenCalledWith({
         type: 'setWasm',
-        wasmModule: mockModule
+        wasmBinary: expect.any(ArrayBuffer)
       });
     });
 

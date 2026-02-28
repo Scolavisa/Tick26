@@ -132,7 +132,7 @@ describe('AudioManager properties', () => {
           expect(workletNode.port.postMessage).toHaveBeenCalledWith(
             expect.objectContaining({
               type: 'setWasm',
-              wasmModule: expect.any(Object)
+              wasmBinary: expect.any(ArrayBuffer)
             })
           );
 
@@ -176,10 +176,10 @@ describe('AudioManager properties', () => {
           // Property: WASM module should be loaded
           expect(wasmModule).not.toBeNull();
 
-          // Property: WASM module should have been sent to worklet
+          // Property: WASM binary should have been sent to worklet
           expect(workletNode.port.postMessage).toHaveBeenCalledWith({
             type: 'setWasm',
-            wasmModule: wasmModule
+            wasmBinary: expect.any(ArrayBuffer)
           });
 
           // Now start processing

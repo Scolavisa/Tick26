@@ -115,30 +115,27 @@ export class AudioManager {
    */
   async loadWasm(): Promise<WebAssembly.Module> {
     try {
-      // Fetch the WASM module from the public directory
       const response = await fetch('/tick-detector.wasm');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch WASM module: ${response.statusText}`);
       }
 
-      // Get the WASM binary
       const wasmBinary = await response.arrayBuffer();
-
-      // Compile the WASM module
       this.wasmModule = await WebAssembly.compile(wasmBinary);
 
-      // Send the compiled module to the worklet
+      // Send the raw binary to the worklet
       if (this.workletNode) {
         this.workletNode.port.postMessage({
           type: 'setWasm',
-          wasmModule: this.wasmModule
+          wasmBinary: wasmBinary
         });
       }
 
       return this.wasmModule;
 
     } catch (error) {
+      console.error('AudioManager: WASM loading failed:', error);
       throw new Error(
         `Failed to load WASM module: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -186,17 +183,14 @@ export class AudioManager {
     }
 
     if (this.isProcessing) {
-      console.warn('AudioManager: Already processing audio');
       return;
     }
 
     // Connect the audio graph
-    // MediaStream → AudioWorklet → Destination (for monitoring, optional)
     this.sourceNode.connect(this.workletNode);
-    // Note: We don't connect to destination to avoid audio feedback
-    // The worklet processes audio but doesn't output it
 
     this.isProcessing = true;
+    console.log('AudioManager: Audio processing started');
   }
 
   /**

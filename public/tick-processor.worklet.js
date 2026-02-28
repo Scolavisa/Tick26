@@ -84,20 +84,15 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
    * Handle WASM module initialization
    * @param {Object} data - WASM module data
    */
-  handleSetWasm(data) {
+  async handleSetWasm(data) {
     try {
-      // The main thread sends us the compiled WASM module
-      if (data.wasmModule) {
-        // Instantiate the WASM module
-        const wasmModule = data.wasmModule;
+      if (data.wasmBinary) {
+        const wasmBinary = data.wasmBinary;
         
-        // Create memory for WASM (1 page = 64KB, enough for audio samples)
-        this.wasmMemory = new WebAssembly.Memory({ initial: 10 });
-        
-        // Instantiate with memory
+        // Compile and instantiate WASM module
+        const wasmModule = await WebAssembly.compile(wasmBinary);
         const instance = new WebAssembly.Instance(wasmModule, {
           env: {
-            memory: this.wasmMemory,
             abort: (msg, file, line, column) => {
               console.error('WASM abort:', msg, file, line, column);
             }
@@ -106,12 +101,15 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
         
         this.wasmInstance = instance;
         this.wasmExports = instance.exports;
+        this.wasmMemory = this.wasmExports.memory;
+        
+        console.log('AudioWorklet: WASM initialized');
         
         // Acknowledge WASM initialization
         this.port.postMessage({ type: 'wasmReady' });
       }
     } catch (error) {
-      console.error('TickProcessorWorklet: Failed to initialize WASM:', error);
+      console.error('AudioWorklet: Failed to initialize WASM:', error);
       this.port.postMessage({
         type: 'error',
         error: 'Failed to initialize WASM module',
@@ -132,20 +130,23 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
   process(inputs, outputs, parameters) {
     // Check if we have WASM initialized
     if (!this.wasmInstance || !this.wasmExports) {
-      // Not ready yet, keep processor alive
-      return true;
+      return true; // Keep processor alive
+    }
+    
+    // Log that we're processing (once)
+    if (!this.processingStarted) {
+      console.log('AudioWorklet: Audio processing started');
+      this.processingStarted = true;
     }
     
     // Get the first input channel (mono)
     const input = inputs[0];
     if (!input || input.length === 0) {
-      // No input, keep processor alive
       return true;
     }
     
     const samples = input[0]; // First channel
     if (!samples || samples.length === 0) {
-      // No samples, keep processor alive
       return true;
     }
     
@@ -153,39 +154,30 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
     
     try {
       // Copy samples to WASM memory
-      // WASM functions expect memory offsets (pointers), not JS typed arrays
-      const wasmMemoryBuffer = this.wasmMemory.buffer;
+      const samplesOffset = 1024; // Safe offset beyond AssemblyScript runtime data
+      const bytesNeeded = sampleCount * 4;
       
-      // Allocate space in WASM memory for samples
-      // We'll use a fixed offset for simplicity
-      // Float32 = 4 bytes, so we need sampleCount * 4 bytes
-      const samplesOffset = 0;
+      // Ensure we have enough memory
+      const memorySize = this.wasmMemory.buffer.byteLength;
+      if (samplesOffset + bytesNeeded > memorySize) {
+        const pagesNeeded = Math.ceil((samplesOffset + bytesNeeded) / 65536);
+        const currentPages = memorySize / 65536;
+        if (pagesNeeded > currentPages) {
+          this.wasmMemory.grow(pagesNeeded - currentPages);
+        }
+      }
+      
       const wasmSamples = new Float32Array(
-        wasmMemoryBuffer,
+        this.wasmMemory.buffer,
         samplesOffset,
         sampleCount
       );
       
-      // Copy input samples to WASM memory
       wasmSamples.set(samples);
       
-      // Debug: Calculate RMS before filtering to see if we're getting audio
-      let sumSquares = 0;
-      for (let i = 0; i < sampleCount; i++) {
-        sumSquares += samples[i] * samples[i];
-      }
-      const inputRMS = Math.sqrt(sumSquares / sampleCount);
-      
-      // Log every 100 blocks (about once per second at 48kHz)
-      if (this.currentSampleTime % 12800 < 128) {
-        console.log('AudioWorklet: Input RMS:', inputRMS.toFixed(6), 'Threshold:', this.threshold.toFixed(6));
-      }
-      
       // Call WASM detectTick function
-      // Function signature: detectTick(samplesPtr: i32, sampleCount: i32, threshold: f32, sensitivity: f32): i32
-      // The first parameter is the byte offset in WASM memory
       const tickDetected = this.wasmExports.detectTick(
-        samplesOffset, // Byte offset in WASM memory
+        samplesOffset,
         sampleCount,
         this.threshold,
         this.sensitivity
@@ -193,8 +185,6 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
       
       // Check if tick was detected
       if (tickDetected) {
-        console.log('AudioWorklet: Tick detected! RMS:', inputRMS.toFixed(6));
-        
         // Check duplicate detection window
         const timeSinceLastTick = this.currentSampleTime - this.lastTickTime;
         
@@ -203,13 +193,8 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
           this.lastTickTime = this.currentSampleTime;
           
           // Calculate RMS for reporting
-          // Function signature: calculateRMS(samplesPtr: i32, sampleCount: i32): f32
           const rms = this.wasmExports.calculateRMS(samplesOffset, sampleCount);
-          
-          // Calculate timestamp from sample time
           const timestamp = this.currentSampleTime / this.sampleRate;
-          
-          console.log('AudioWorklet: Posting tick event, RMS:', rms);
           
           // Post tick detection message to main thread
           this.port.postMessage({
@@ -217,19 +202,16 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
             timestamp: timestamp,
             sampleTime: this.currentSampleTime,
             amplitude: rms,
-            confidence: 1.0 // Could be calculated based on how much threshold was exceeded
+            confidence: 1.0
           });
-        } else {
-          console.log('AudioWorklet: Tick ignored (duplicate within 50ms)');
         }
-        // else: duplicate within 50ms window, ignore
       }
       
       // Update current sample time
       this.currentSampleTime += sampleCount;
       
     } catch (error) {
-      console.error('TickProcessorWorklet: Error processing audio:', error);
+      console.error('AudioWorklet: Error processing audio:', error);
       this.port.postMessage({
         type: 'error',
         error: 'Audio processing error',
@@ -237,7 +219,6 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
       });
     }
     
-    // Keep processor alive
     return true;
   }
 }
