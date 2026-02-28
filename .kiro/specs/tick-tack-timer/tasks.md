@@ -331,8 +331,8 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - **Validates: Requirements 12.5**
     - Test that successful calibration enables measurement page navigation
 
-- [ ] 14. Implement MeasurementPage component
-  - [ ] 14.1 Create MeasurementPage.vue
+- [x] 14. Implement MeasurementPage component
+  - [x] 14.1 Create MeasurementPage.vue
     - Create src/pages/MeasurementPage.vue
     - Use useCounter, useSession, and useAudio composables
     - Display large tick count number
@@ -344,7 +344,7 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Connect tick detection callback from AudioManager to counter increment
     - _Requirements: 5.1, 5.2, 5.4, 11.1, 11.2, 11.4, 11.5, 13.1, 13.5_
   
-  - [ ]* 14.2 Write component tests for MeasurementPage
+  - [x] 14.2 Write component tests for MeasurementPage
     - Test tick count display
     - Test session start/stop
     - Test reset functionality
@@ -352,22 +352,22 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Test idle state display
     - _Requirements: 5.2, 11.1, 11.5, 13.1_
   
-  - [ ]* 14.3 Write property test for real-time count display
+  - [x] 14.3 Write property test for real-time count display
     - **Property 15: Real-time count display**
     - **Validates: Requirements 5.2**
     - Test that count changes update display
   
-  - [ ]* 14.4 Write property test for tick detection visual feedback
+  - [x] 14.4 Write property test for tick detection visual feedback
     - **Property 27: Tick detection visual feedback**
     - **Validates: Requirements 11.1**
     - Test that tick events trigger visual feedback
   
-  - [ ]* 14.5 Write property test for idle state indication
+  - [x] 14.5 Write property test for idle state indication
     - **Property 28: Idle state indication**
     - **Validates: Requirements 11.5**
     - Test that 5 seconds without ticks shows idle indicator
   
-  - [ ]* 14.6 Write property test for tick event notification
+  - [x] 14.6 Write property test for tick event notification
     - **Property 12: Tick event notification**
     - **Validates: Requirements 4.3**
     - Test that confirmed tick events notify counter
