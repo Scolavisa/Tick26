@@ -184,8 +184,8 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - **Validates: Requirements 2.4**
     - Test that saved calibration settings can be loaded with same values
 
-- [ ] 8. Implement useCounter composable
-  - [ ] 8.1 Create useCounter composable
+- [x] 8. Implement useCounter composable
+  - [x] 8.1 Create useCounter composable
     - Create src/composables/useCounter.ts
     - Implement reactive state: count, lastTickTimestamp, isIdle
     - Implement increment() method to increase count
@@ -194,18 +194,18 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Implement idle detection (5 seconds without ticks)
     - _Requirements: 5.1, 5.3, 11.5_
   
-  - [ ]* 8.2 Write unit tests for useCounter
+  - [x] 8.2 Write unit tests for useCounter
     - Test increment functionality
     - Test reset functionality
     - Test idle detection after 5 seconds
     - _Requirements: 5.1, 5.3, 11.5_
   
-  - [ ]* 8.3 Write property test for count accuracy
+  - [x] 8.3 Write property test for count accuracy
     - **Property 14: Tick count accuracy**
     - **Validates: Requirements 5.1, 5.5**
     - Test that N tick events result in count of N
   
-  - [ ]* 8.4 Write property test for session reset
+  - [x] 8.4 Write property test for session reset
     - **Property 16: Session initialization resets counter**
     - **Validates: Requirements 5.3, 13.2**
     - Test that starting new session resets counter to zero
@@ -221,13 +221,13 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Implement session timer using setInterval
     - _Requirements: 13.1, 13.2, 13.3, 13.4_
   
-  - [ ]* 9.2 Write unit tests for useSession
+  - [ ] 9.2 Write unit tests for useSession
     - Test session start/stop lifecycle
     - Test duration calculation
     - Test session timer
     - _Requirements: 13.1, 13.2, 13.4_
   
-  - [ ]* 9.3 Write property test for session stop preservation
+  - [ ] 9.3 Write property test for session stop preservation
     - **Property 32: Session stop preserves count**
     - **Validates: Requirements 13.3**
     - Test that stopped session preserves final count
