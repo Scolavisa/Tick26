@@ -290,8 +290,8 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - **Validates: Requirements 8.3**
     - Test that granted permission activates audio input
 
-- [ ] 13. Implement CalibrationPage component
-  - [ ] 13.1 Create CalibrationPage.vue
+- [x] 13. Implement CalibrationPage component
+  - [x] 13.1 Create CalibrationPage.vue
     - Create src/pages/CalibrationPage.vue
     - Use useCalibration and useAudio composables
     - Implement clock size selection (small, medium, large) with buttons or radio group
@@ -303,7 +303,7 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Implement 30-second timeout with user prompt
     - _Requirements: 2.1, 2.5, 12.1, 12.2, 12.3, 12.4, 12.5_
   
-  - [ ]* 13.2 Write component tests for CalibrationPage
+  - [x] 13.2 Write component tests for CalibrationPage
     - Test clock size selection
     - Test calibration start/stop
     - Test tick count display during calibration
@@ -311,22 +311,22 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Test timeout handling
     - _Requirements: 2.1, 2.5, 12.1, 12.2, 12.4_
   
-  - [ ]* 13.3 Write property test for calibration visual feedback
+  - [x] 13.3 Write property test for calibration visual feedback
     - **Property 7: Calibration visual feedback**
     - **Validates: Requirements 2.5**
     - Test that detected ticks update display in same render cycle
   
-  - [ ]* 13.4 Write property test for calibration tick display
+  - [x] 13.4 Write property test for calibration tick display
     - **Property 29: Calibration tick display**
     - **Validates: Requirements 12.1**
     - Test that calibration page updates tick count display
   
-  - [ ]* 13.5 Write property test for calibration completion indication
+  - [x] 13.5 Write property test for calibration completion indication
     - **Property 30: Calibration completion indication**
     - **Validates: Requirements 12.2**
     - Test that completion status is indicated when minimum ticks collected
   
-  - [ ]* 13.6 Write property test for calibration success navigation
+  - [x] 13.6 Write property test for calibration success navigation
     - **Property 31: Calibration success enables navigation**
     - **Validates: Requirements 12.5**
     - Test that successful calibration enables measurement page navigation
