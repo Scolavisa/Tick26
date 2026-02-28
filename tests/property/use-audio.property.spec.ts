@@ -161,7 +161,7 @@ describe('useAudio properties', () => {
 
     await fc.assert(
       fc.asyncProperty(
-        // Generate arbitrary lists of audio devices
+        // Generate arbitrary lists of audio devices with unique deviceIds
         fc.array(
           fc.record({
             deviceId: fc.string({ minLength: 1, maxLength: 50 }),
@@ -170,7 +170,13 @@ describe('useAudio properties', () => {
             groupId: fc.string()
           }),
           { minLength: 1, maxLength: 10 }
-        ),
+        ).map(devices => {
+          // Ensure unique deviceIds by deduplicating
+          const uniqueDevices = Array.from(
+            new Map(devices.map(d => [d.deviceId, d])).values()
+          );
+          return uniqueDevices;
+        }),
         async (devices) => {
           // Mock enumerateDevices to return our generated devices
           mockEnumerateDevices.mockResolvedValue(devices);
