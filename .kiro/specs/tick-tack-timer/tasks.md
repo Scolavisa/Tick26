@@ -113,8 +113,8 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
   - Manually test that AudioWorklet processor loads
   - Ensure all tests pass, ask the user if questions arise
 
-- [ ] 6. Implement useAudio composable
-  - [ ] 6.1 Create useAudio composable
+- [x] 6. Implement useAudio composable
+  - [x] 6.1 Create useAudio composable
     - Create src/composables/useAudio.ts
     - Implement reactive state: audioContext, selectedDevice, availableDevices, isInitialized, permissionGranted
     - Implement requestPermission() to request microphone access
@@ -126,7 +126,7 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Persist device selection to localStorage
     - _Requirements: 1.2, 1.3, 1.5, 8.1, 8.3_
   
-  - [ ]* 6.2 Write unit tests for useAudio
+  - [x] 6.2 Write unit tests for useAudio
     - Mock navigator.mediaDevices API
     - Test permission request flow
     - Test device enumeration
@@ -134,17 +134,17 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Test localStorage persistence
     - _Requirements: 1.2, 1.5, 8.1_
   
-  - [ ]* 6.3 Write property test for microphone activation
+  - [x] 6.3 Write property test for microphone activation
     - **Property 1: Microphone selection activation**
     - **Validates: Requirements 1.2**
     - Test that selected microphone becomes active audio source
   
-  - [ ]* 6.4 Write property test for external microphone detection
+  - [x] 6.4 Write property test for external microphone detection
     - **Property 2: External microphone enumeration**
     - **Validates: Requirements 1.3**
     - Test that connected external microphones are detected and listed
   
-  - [ ]* 6.5 Write property test for selection persistence
+  - [x] 6.5 Write property test for selection persistence
     - **Property 3: Microphone selection persistence**
     - **Validates: Requirements 1.5**
     - Test that microphone selection persists across app reloads
