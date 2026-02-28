@@ -237,33 +237,33 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
   - Manually test each composable in isolation
   - Ensure all tests pass, ask the user if questions arise
 
-- [ ] 11. Implement Vue Router and navigation
-  - [ ] 11.1 Set up Vue Router
+- [x] 11. Implement Vue Router and navigation
+  - [x] 11.1 Set up Vue Router
     - Create src/router/index.ts
     - Define routes for Settings, Calibration, and Measurement pages
     - Set Measurement page as default route (/)
     - Configure router with history mode
     - _Requirements: 7.1, 7.2, 7.5, 10.2_
   
-  - [ ] 11.2 Create App.vue with navigation
+  - [x] 11.2 Create App.vue with navigation
     - Create src/App.vue as root component
     - Add navigation controls (tabs or buttons) for page switching
     - Add router-view for page rendering
     - Implement basic layout structure
     - _Requirements: 7.2_
   
-  - [ ]* 11.3 Write unit tests for router configuration
+  - [x] 11.3 Write unit tests for router configuration
     - Test route definitions
     - Test default route
     - Test navigation between pages
     - _Requirements: 7.1, 7.5_
   
-  - [ ]* 11.4 Write property test for navigation state preservation
+  - [x] 11.4 Write property test for navigation state preservation
     - **Property 17: Navigation state preservation**
     - **Validates: Requirements 7.4**
     - Test that app state remains unchanged after navigation
   
-  - [ ]* 11.5 Write property test for navigation controls availability
+  - [x] 11.5 Write property test for navigation controls availability
     - **Property 18: Navigation controls availability**
     - **Validates: Requirements 7.2**
     - Test that navigation controls are present on all pages

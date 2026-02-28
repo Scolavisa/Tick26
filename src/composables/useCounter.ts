@@ -1,11 +1,5 @@
 import { ref, computed } from 'vue'
 
-interface CounterState {
-  count: number
-  lastTickTimestamp: number | null
-  isIdle: boolean
-}
-
 const IDLE_TIMEOUT_MS = 5000 // 5 seconds
 
 // Singleton state

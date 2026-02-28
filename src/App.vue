@@ -1,30 +1,72 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <div class="app">
+    <nav class="navigation">
+      <router-link to="/" class="nav-button" :class="{ active: route.name === 'measurement' }">
+        Measurement
+      </router-link>
+      <router-link to="/calibration" class="nav-button" :class="{ active: route.name === 'calibration' }">
+        Calibration
+      </router-link>
+      <router-link to="/settings" class="nav-button" :class="{ active: route.name === 'settings' }">
+        Settings
+      </router-link>
+    </nav>
+    
+    <main class="content">
+      <router-view />
+    </main>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+
+.navigation {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: #2c3e50;
+  padding: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+.nav-button {
+  flex: 1;
+  padding: 1rem;
+  text-align: center;
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+  margin: 0 0.25rem;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-button.active {
+  background-color: #42b883;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
 }
 </style>
