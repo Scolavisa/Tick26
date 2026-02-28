@@ -102,7 +102,7 @@ const {
   isInitialized,
   permissionGranted,
   onTickDetected,
-  setCalibration,
+  initializeWorklet,
   startProcessing,
   stopProcessing
 } = useAudio();
@@ -143,6 +143,14 @@ const handleStartCalibration = async () => {
   try {
     // Clear any previous status
     statusMessage.value = '';
+    
+    // Initialize worklet and WASM if not already done
+    try {
+      await initializeWorklet();
+    } catch (error) {
+      // Worklet might already be initialized, which is fine
+      console.log('Worklet initialization:', error);
+    }
     
     // Start calibration
     startCalibration();

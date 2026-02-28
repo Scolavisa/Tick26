@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useCounter } from '../composables/useCounter'
 import { useSession } from '../composables/useSession'
 import { useAudio } from '../composables/useAudio'
@@ -93,15 +93,23 @@ const formattedDuration = computed(() => {
 })
 
 // Methods
-const handleStart = () => {
+const handleStart = async () => {
   // Reset counter for new session
   counter.reset()
   
   // Start session
   session.start()
   
-  // Start audio processing
+  // Initialize worklet and start audio processing
   try {
+    // Initialize worklet if not already done
+    try {
+      await audio.initializeWorklet()
+    } catch (error) {
+      // Worklet might already be initialized, which is fine
+      console.log('Worklet initialization:', error)
+    }
+    
     audio.startProcessing()
   } catch (error) {
     console.error('Failed to start audio processing:', error)

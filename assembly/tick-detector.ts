@@ -8,8 +8,9 @@
 
 // Simple in-place first-order high-pass filter.
 // Assumes a nominal sample rate of 48000 Hz, which is typical for Web Audio.
+// Takes a pointer to float samples in memory
 export function applyHighPassFilter(
-  samples: Float32Array,
+  samplesPtr: usize,
   sampleCount: i32
 ): void {
   if (sampleCount <= 0) {
@@ -29,21 +30,23 @@ export function applyHighPassFilter(
   const dt: f32 = 1.0 / sampleRate;
   const alpha: f32 = rc / (rc + dt);
 
-  let xPrev: f32 = samples[0];
+  let xPrev: f32 = load<f32>(samplesPtr);
   let yPrev: f32 = 0.0;
 
   for (let i: i32 = 0; i < sampleCount; i++) {
-    const x: f32 = samples[i];
+    const offset = samplesPtr + (i << 2); // i * 4 bytes (f32)
+    const x: f32 = load<f32>(offset);
     const y: f32 = alpha * (yPrev + x - xPrev);
-    samples[i] = y;
+    store<f32>(offset, y);
     xPrev = x;
     yPrev = y;
   }
 }
 
 // Compute RMS (Root Mean Square) amplitude for the given samples.
+// Takes a pointer to float samples in memory
 export function calculateRMS(
-  samples: Float32Array,
+  samplesPtr: usize,
   sampleCount: i32
 ): f32 {
   if (sampleCount <= 0) {
@@ -52,7 +55,8 @@ export function calculateRMS(
 
   let sumSquares: f32 = 0.0;
   for (let i: i32 = 0; i < sampleCount; i++) {
-    const value: f32 = samples[i];
+    const offset = samplesPtr + (i << 2); // i * 4 bytes (f32)
+    const value: f32 = load<f32>(offset);
     sumSquares += value * value;
   }
 
@@ -67,6 +71,8 @@ export function calculateRMS(
 // 2. Computes RMS amplitude of the filtered signal
 // 3. Compares RMS against threshold scaled by sensitivity
 //
+// Takes a pointer to float samples in memory
+//
 // Returns:
 // - true when a potential Tick_Event is detected
 // - false otherwise
@@ -75,7 +81,7 @@ export function calculateRMS(
 // - Requirement 4.1: Threshold-based tick identification
 // - Requirement 4.2: Sensitivity-based noise filtering
 export function detectTick(
-  samples: Float32Array,
+  samplesPtr: usize,
   sampleCount: i32,
   threshold: f32,
   sensitivity: f32
@@ -93,10 +99,10 @@ export function detectTick(
   }
 
   // Step 1: Filter low-frequency components.
-  applyHighPassFilter(samples, sampleCount);
+  applyHighPassFilter(samplesPtr, sampleCount);
 
   // Step 2: Compute RMS amplitude of filtered signal.
-  const rms: f32 = calculateRMS(samples, sampleCount);
+  const rms: f32 = calculateRMS(samplesPtr, sampleCount);
 
   // Step 3: Compare against calibrated threshold scaled by sensitivity.
   const effectiveThreshold: f32 = threshold * effectiveSensitivity;
