@@ -149,8 +149,8 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - **Validates: Requirements 1.5**
     - Test that microphone selection persists across app reloads
 
-- [ ] 7. Implement useCalibration composable
-  - [ ] 7.1 Create useCalibration composable
+- [x] 7. Implement useCalibration composable
+  - [x] 7.1 Create useCalibration composable
     - Create src/composables/useCalibration.ts
     - Implement reactive state: clockSize, sensitivity, threshold, isCalibrating, calibrationProgress
     - Implement startCalibration() to begin calibration process
@@ -162,24 +162,24 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Validate minimum 10 ticks for completion
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 12.3_
   
-  - [ ]* 7.2 Write unit tests for useCalibration
+  - [x] 7.2 Write unit tests for useCalibration
     - Test calibration state machine
     - Test sensitivity and threshold calculation
     - Test localStorage persistence
     - Test minimum tick validation
     - _Requirements: 2.3, 2.4, 12.3_
   
-  - [ ]* 7.3 Write property test for frequency adjustment
+  - [x] 7.3 Write property test for frequency adjustment
     - **Property 4: Clock size frequency adjustment**
     - **Validates: Requirements 2.2**
     - Test that clock size selection sets correct expected frequency
   
-  - [ ]* 7.4 Write property test for calibration computation
+  - [x] 7.4 Write property test for calibration computation
     - **Property 5: Calibration parameter computation**
     - **Validates: Requirements 2.3**
     - Test that audio input during calibration produces sensitivity/threshold values
   
-  - [ ]* 7.5 Write property test for calibration persistence
+  - [x] 7.5 Write property test for calibration persistence
     - **Property 6: Calibration settings persistence**
     - **Validates: Requirements 2.4**
     - Test that saved calibration settings can be loaded with same values
