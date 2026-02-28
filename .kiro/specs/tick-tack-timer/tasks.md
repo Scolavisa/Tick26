@@ -69,20 +69,20 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Post tick detection messages to main thread
     - _Requirements: 3.1, 3.2, 3.3, 4.3, 4.4_
   
-  - [ ]* 3.2 Write unit tests for AudioWorklet processor
+  - [x] 3.2 Write unit tests for AudioWorklet processor
     - Mock AudioWorkletProcessor environment
     - Test message passing between worklet and main thread
     - Test audio sample processing logic
     - Test duplicate detection window
     - _Requirements: 3.2, 4.4_
   
-  - [ ]* 3.3 Write property test for duplicate prevention
+  - [ ] 3.3 Write property test for duplicate prevention
     - **Property 13: Duplicate tick prevention**
     - **Validates: Requirements 4.4**
     - Test that detections within 50ms window are ignored
 
-- [ ] 4. Implement AudioManager
-  - [ ] 4.1 Create AudioManager class
+- [x] 4. Implement AudioManager
+  - [x] 4.1 Create AudioManager class
     - Create src/audio/AudioManager.ts
     - Implement initialize() method to create AudioContext and request microphone access
     - Implement loadWorklet() method to load AudioWorklet processor
@@ -94,7 +94,7 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Implement cleanup() for resource disposal
     - _Requirements: 3.1, 3.2, 3.3, 8.3_
   
-  - [ ]* 4.2 Write unit tests for AudioManager
+  - [x] 4.2 Write unit tests for AudioManager
     - Mock Web Audio API components
     - Test initialization flow
     - Test worklet and WASM loading
@@ -102,7 +102,7 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Test cleanup and resource disposal
     - _Requirements: 3.1, 3.3_
   
-  - [ ]* 4.3 Write property test for audio sample forwarding
+  - [x] 4.3 Write property test for audio sample forwarding
     - **Property 9: Audio sample forwarding**
     - **Validates: Requirements 3.3**
     - Test that audio samples are passed to WASM module

@@ -38,10 +38,46 @@ yarn coverage
 tests/
 ├── unit/
 │   └── audio/
-│       └── tick-detector.spec.ts       # Unit tests for WASM tick detector
+│       ├── tick-detector.spec.ts           # Unit tests for WASM tick detector (8 tests)
+│       ├── tick-processor.worklet.spec.ts  # Unit tests for AudioWorklet processor (20 tests)
+│       └── AudioManager.spec.ts            # Unit tests for AudioManager (46 tests)
 └── property/
-    └── tick-detection.property.spec.ts # Property-based tests (fast-check)
+    ├── tick-detection.property.spec.ts     # Property tests for tick detection (2 tests)
+    └── audio-manager.property.spec.ts      # Property tests for audio forwarding (4 tests)
 ```
+
+## Test Coverage
+
+### Task 2: WASM Tick Detector
+- ✅ 8 unit tests for RMS calculation, high-pass filtering, and tick detection
+- ✅ 2 property-based tests (Properties 10 & 11) - 100 iterations each
+
+### Task 3: AudioWorklet Processor
+- ✅ 20 unit tests covering:
+  - Initialization and configuration
+  - Message handling (setCalibration, setWasm)
+  - Audio processing pipeline
+  - Duplicate detection window (50ms)
+  - Error handling
+
+### Task 4: AudioManager
+- ✅ 46 unit tests covering:
+  - AudioContext initialization
+  - Microphone access and permissions
+  - AudioWorklet loading
+  - WASM module loading and compilation
+  - Calibration settings
+  - Audio graph connection (start/stop)
+  - Tick detection callbacks
+  - Worklet message handling
+  - Resource cleanup
+- ✅ 4 property-based tests (Property 9) covering:
+  - Audio sample forwarding to WASM module (100 iterations)
+  - WASM module initialization before processing (50 iterations)
+  - Audio graph connection stability (50 iterations)
+  - Calibration propagation to worklet (50 iterations)
+
+**Total: 80 tests, all passing**
 
 ## What Was Fixed in Task 2
 
