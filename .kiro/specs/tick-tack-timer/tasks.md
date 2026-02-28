@@ -34,7 +34,7 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - Export ClockSize type: 'small' | 'medium' | 'large'
     - _Requirements: 10.4_
 
-- [-] 2. Implement WASM tick detector
+- [x] 2. Implement WASM tick detector
   - [x] 2.1 Create AssemblyScript tick detection module
     - Create assembly/tick-detector.ts with exported functions: detectTick, calculateRMS, applyHighPassFilter
     - Implement RMS calculation for audio samples
@@ -59,8 +59,8 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - **Validates: Requirements 4.2**
     - Test that samples below sensitivity threshold are filtered out
 
-- [ ] 3. Implement AudioWorklet processor
-  - [ ] 3.1 Create AudioWorklet processor script
+- [x] 3. Implement AudioWorklet processor
+  - [x] 3.1 Create AudioWorklet processor script
     - Create public/tick-processor.worklet.js (will be loaded as module)
     - Implement TickProcessorWorklet class extending AudioWorkletProcessor
     - Implement process() method to handle 128-sample blocks

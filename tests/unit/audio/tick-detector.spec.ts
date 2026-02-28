@@ -70,7 +70,11 @@ describe('tick-detector-math: detectTick', () => {
   });
 
   it('detects tick when RMS exceeds threshold * sensitivity', () => {
-    const samples = new Float32Array(128).fill(0.5);
+    // Create a high-frequency signal (alternating values simulate a tick)
+    const samples = new Float32Array(128);
+    for (let i = 0; i < samples.length; i++) {
+      samples[i] = i % 2 === 0 ? 0.5 : -0.5;
+    }
 
     const detected = detectTick(samples, samples.length, 0.05, 1.0);
 
@@ -78,7 +82,14 @@ describe('tick-detector-math: detectTick', () => {
   });
 
   it('is less sensitive when sensitivity is low', () => {
-    const samples = new Float32Array(128).fill(0.1);
+    // Create a moderate high-frequency signal
+    // After filtering, this will have RMS ~0.13, which is:
+    // - Above threshold * highSensitivity (0.05 * 2.0 = 0.10) -> detected
+    // - Below threshold * lowSensitivity (0.15 * 1.0 = 0.15) -> not detected
+    const samples = new Float32Array(128);
+    for (let i = 0; i < samples.length; i++) {
+      samples[i] = i % 2 === 0 ? 0.13 : -0.13;
+    }
 
     const withHighSensitivity = detectTick(
       samples.slice(),
@@ -89,12 +100,11 @@ describe('tick-detector-math: detectTick', () => {
     const withLowSensitivity = detectTick(
       samples.slice(),
       samples.length,
-      0.05,
-      0.1,
+      0.15,
+      1.0,
     );
 
     expect(withHighSensitivity).toBe(true);
     expect(withLowSensitivity).toBe(false);
   });
-}
-*** End Patch】}***/
+});

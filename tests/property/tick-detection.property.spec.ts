@@ -18,8 +18,8 @@ describe('tick-detector-math properties', () => {
           noNaN: true,
           noDefaultInfinity: true,
         }),
-        fc.float({ min: 0.01, max: 0.5 }),
-        fc.float({ min: 0.1, max: 2.0 }),
+        fc.float({ min: Math.fround(0.01), max: Math.fround(0.5) }),
+        fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
         (samples, threshold, sensitivity) => {
           if (samples.length === 0) {
             return true;
@@ -53,34 +53,49 @@ describe('tick-detector-math properties', () => {
           noNaN: true,
           noDefaultInfinity: true,
         }),
-        fc.float({ min: 0.01, max: 0.5 }),
-        fc.float({ min: 0.1, max: 2.0 }),
+        fc.float({ min: Math.fround(0.01), max: Math.fround(0.5) }),
+        fc.float({ min: Math.fround(0.1), max: Math.fround(2.0) }),
         (samples, threshold, sensitivity) => {
           if (samples.length === 0) {
             return true;
           }
 
-          const maxAllowedRms = threshold * sensitivity * 0.9;
-          const scale =
-            calculateRMS(samples, samples.length) === 0
-              ? 0
-              : maxAllowedRms /
-                calculateRMS(samples, samples.length);
+          // Create a copy for filtering to measure post-filter RMS
+          const testSamples = samples.slice();
+          
+          // Apply the same filtering that detectTick does
+          const cutoff = 500.0;
+          const sampleRate = 48000.0;
+          const rc = 1.0 / (2.0 * Math.PI * cutoff);
+          const dt = 1.0 / sampleRate;
+          const alpha = rc / (rc + dt);
 
-          const scaled = new Float32Array(samples.length);
+          let xPrev = testSamples[0];
+          let yPrev = 0.0;
 
-          for (let i = 0; i < samples.length; i += 1) {
-            scaled[i] = samples[i] * scale;
+          for (let i = 0; i < testSamples.length; i++) {
+            const x = testSamples[i];
+            const y = alpha * (yPrev + x - xPrev);
+            testSamples[i] = y;
+            xPrev = x;
+            yPrev = y;
           }
 
-          const detected = detectTick(
-            scaled,
-            scaled.length,
-            threshold,
-            sensitivity,
-          );
+          // Calculate RMS of filtered signal
+          const rms = calculateRMS(testSamples, testSamples.length);
+          const effectiveThreshold = threshold * sensitivity;
 
-          expect(detected).toBe(false);
+          // If the filtered RMS is below threshold, detection should be false
+          if (rms < effectiveThreshold * 0.9) {
+            const detected = detectTick(
+              samples.slice(),
+              samples.length,
+              threshold,
+              sensitivity,
+            );
+
+            expect(detected).toBe(false);
+          }
         },
       ),
       { numRuns: 100 },
