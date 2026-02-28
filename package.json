@@ -11,7 +11,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest --run",
     "coverage": "vitest --coverage",
-    "build:wasm": "asc assembly/tick-detector.ts -b public/tick-detector.wasm -t public/tick-detector.wat --optimize"
+    "build:wasm": "asc assembly/tick-detector.ts --outFile public/tick-detector.wasm --textFile public/tick-detector.wat --optimize"
   },
   "dependencies": {
     "vue": "^3.5.25",

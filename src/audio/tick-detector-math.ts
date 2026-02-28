@@ -22,11 +22,11 @@ export function applyHighPassFilter(
   const dt = 1.0 / sampleRate;
   const alpha = rc / (rc + dt);
 
-  let xPrev = samples[0];
+  let xPrev = samples[0]!;
   let yPrev = 0.0;
 
   for (let i = 0; i < sampleCount; i += 1) {
-    const x = samples[i];
+    const x = samples[i]!;
     const y = alpha * (yPrev + x - xPrev);
     samples[i] = y;
     xPrev = x;
@@ -48,7 +48,7 @@ export function calculateRMS(
   let sumSquares = 0.0;
 
   for (let i = 0; i < sampleCount; i += 1) {
-    const value = samples[i];
+    const value = samples[i]!;
     sumSquares += value * value;
   }
 

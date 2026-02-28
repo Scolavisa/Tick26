@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build artifacts (generated from source)
+public/tick-detector.wasm
+public/tick-detector.wat
+
+# WebAssembly text format (debug only, not needed in production)
+*.wat
