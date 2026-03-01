@@ -185,191 +185,269 @@ onMounted(async () => {
 
 <style scoped>
 .settings-page {
-  padding: 2rem;
+  padding: var(--spacing-xl);
   max-width: 600px;
   margin: 0 auto;
 }
 
 h1 {
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  color: #2c3e50;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--spacing-xl);
+  color: var(--color-text-primary);
 }
 
 h2 {
-  font-size: 1.5rem;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  color: #2c3e50;
+  font-size: var(--font-size-xl);
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-primary);
 }
 
 h3 {
-  font-size: 1.2rem;
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
+  font-size: var(--font-size-lg);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-primary);
 }
 
 /* Permission Status */
 .permission-status {
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  background-color: #f5f5f5;
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: var(--spacing-xl);
+  background-color: var(--color-bg-tertiary);
+  border: var(--border-width) solid var(--color-border);
 }
 
 .permission-status.granted {
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
+  background-color: var(--color-success-light);
+  border-color: var(--color-success);
 }
 
 .permission-status.denied {
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
+  background-color: var(--color-danger-light);
+  border-color: var(--color-danger);
 }
 
 .status-message {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  font-weight: 500;
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
 }
 
 /* Buttons */
 .btn-primary,
 .btn-secondary {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  transition: background-color 0.2s;
-  min-width: 44px;
-  min-height: 44px;
+  transition: all var(--transition-base);
+  
+  /* Touch-friendly minimum size */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  
+  /* Prevent accidental double-tap zoom */
+  touch-action: manipulation;
 }
 
 .btn-primary {
-  background-color: #42b983;
+  background-color: var(--color-secondary);
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #359268;
+  background-color: var(--color-secondary-dark);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: var(--color-text-secondary);
   color: white;
-  margin-top: 1rem;
+  margin-top: var(--spacing-md);
+  width: 100%;
 }
 
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: var(--color-primary);
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
 }
 
 .btn-secondary:disabled {
-  background-color: #adb5bd;
+  background-color: var(--color-border);
   cursor: not-allowed;
 }
 
 /* Microphone Selection */
 .microphone-selection {
-  margin-top: 2rem;
+  margin-top: var(--spacing-xl);
 }
 
 .no-devices {
-  padding: 1rem;
-  background-color: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 4px;
-  margin-bottom: 1rem;
+  padding: var(--spacing-md);
+  background-color: var(--color-warning-light);
+  border: var(--border-width) solid var(--color-warning);
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.no-devices p {
+  margin: 0;
+  color: var(--color-warning-dark);
 }
 
 .device-list {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
 }
 
 .device-item {
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--spacing-sm);
 }
 
 .device-label {
   display: flex;
   align-items: center;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border: 2px solid #dee2e6;
-  border-radius: 4px;
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-primary);
+  border: var(--border-width-thick) solid var(--color-border);
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  transition: all 0.2s;
-  min-height: 44px;
+  transition: all var(--transition-base);
+  
+  /* Touch-friendly minimum size */
+  min-height: var(--touch-target-min);
+  
+  /* Prevent accidental double-tap zoom */
+  touch-action: manipulation;
 }
 
 .device-label:hover {
-  background-color: #e9ecef;
-  border-color: #42b983;
+  background-color: var(--color-bg-secondary);
+  border-color: var(--color-secondary);
+}
+
+.device-label:active {
+  transform: scale(0.99);
 }
 
 .device-radio {
-  margin-right: 1rem;
+  margin-right: var(--spacing-md);
   cursor: pointer;
   width: 20px;
   height: 20px;
+  flex-shrink: 0;
 }
 
 .device-name {
   flex: 1;
-  font-size: 1rem;
+  font-size: var(--font-size-sm);
+  word-break: break-word;
 }
 
 .current-badge {
-  padding: 0.25rem 0.75rem;
-  background-color: #42b983;
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--color-secondary);
   color: white;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+  margin-left: var(--spacing-sm);
 }
 
 /* Current Selection */
 .current-selection {
-  padding: 1rem;
-  background-color: #e7f3ff;
-  border: 1px solid #b3d9ff;
-  border-radius: 4px;
-  margin-bottom: 1rem;
+  padding: var(--spacing-md);
+  background-color: var(--color-info-light);
+  border: var(--border-width) solid var(--color-info);
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.current-selection h3 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-sm);
 }
 
 .current-selection p {
   margin: 0;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
+  word-break: break-word;
 }
 
 /* Error Message */
 .error-message {
-  padding: 1rem;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  border-radius: 4px;
-  margin-top: 1rem;
-  color: #721c24;
+  padding: var(--spacing-md);
+  background-color: var(--color-danger-light);
+  border: var(--border-width) solid var(--color-danger);
+  border-radius: var(--border-radius-md);
+  margin-top: var(--spacing-md);
 }
 
 .error-message p {
   margin: 0;
+  color: var(--color-danger-dark);
+  line-height: var(--line-height-normal);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .settings-page {
-    padding: 1rem;
+    padding: var(--spacing-md);
   }
 
   h1 {
-    font-size: 1.5rem;
+    font-size: var(--font-size-xl);
   }
 
   h2 {
-    font-size: 1.25rem;
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-page {
+    padding: var(--spacing-sm);
+  }
+  
+  .permission-status {
+    padding: var(--spacing-md);
+  }
+  
+  .device-label {
+    padding: var(--spacing-sm);
+  }
+  
+  .device-name {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* Landscape orientation support */
+@media (orientation: landscape) and (max-height: 500px) {
+  .settings-page {
+    padding: var(--spacing-md);
+  }
+  
+  h1 {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  h2 {
+    font-size: var(--font-size-lg);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
   }
 }
 </style>

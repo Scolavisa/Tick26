@@ -283,62 +283,76 @@ onUnmounted(() => {
 
 <style scoped>
 .calibration-page {
-  padding: 2rem;
+  padding: var(--spacing-xl);
   max-width: 600px;
   margin: 0 auto;
 }
 
 h1 {
-  font-size: 2rem;
-  margin-bottom: 2rem;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--spacing-xl);
   text-align: center;
+  color: var(--color-text-primary);
 }
 
 h2 {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-primary);
 }
 
 section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-xl);
 }
 
 /* Clock Size Selection */
 .clock-size-section {
-  background: #f5f5f5;
-  padding: 1.5rem;
-  border-radius: 8px;
+  background: var(--color-bg-tertiary);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
 }
 
 .clock-size-buttons {
   display: flex;
-  gap: 1rem;
+  gap: var(--spacing-md);
   justify-content: center;
 }
 
 .size-button {
   flex: 1;
-  padding: 1rem;
-  font-size: 1rem;
-  border: 2px solid #ccc;
-  background: white;
-  border-radius: 8px;
+  padding: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border: var(--border-width-thick) solid var(--color-border);
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius-lg);
   cursor: pointer;
-  transition: all 0.2s;
-  min-height: 44px;
-  min-width: 44px;
+  transition: all var(--transition-base);
+  
+  /* Touch-friendly minimum size */
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  
+  /* Prevent accidental double-tap zoom */
+  touch-action: manipulation;
 }
 
 .size-button:hover:not(:disabled) {
-  border-color: #2c3e50;
-  background: #f9f9f9;
+  border-color: var(--color-primary);
+  background: var(--color-bg-secondary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.size-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .size-button.active {
-  border-color: #2c3e50;
-  background: #2c3e50;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
   color: white;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 }
 
 .size-button:disabled {
@@ -353,37 +367,55 @@ section {
 
 .start-button,
 .stop-button {
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--border-radius-lg);
   cursor: pointer;
-  transition: all 0.2s;
-  min-height: 44px;
+  transition: all var(--transition-base);
+  
+  /* Touch-friendly minimum size */
+  min-height: var(--touch-target-min);
   min-width: 200px;
+  
+  /* Prevent accidental double-tap zoom */
+  touch-action: manipulation;
 }
 
 .start-button {
-  background: #4caf50;
+  background: var(--color-success);
   color: white;
 }
 
 .start-button:hover:not(:disabled) {
-  background: #45a049;
+  background: var(--color-success-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.start-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .start-button:disabled {
-  background: #ccc;
+  background: var(--color-border);
   cursor: not-allowed;
 }
 
 .stop-button {
-  background: #f44336;
+  background: var(--color-danger);
   color: white;
 }
 
 .stop-button:hover {
-  background: #da190b;
+  background: var(--color-danger-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stop-button:active {
+  transform: translateY(0);
 }
 
 /* Calibration Status */
@@ -392,22 +424,28 @@ section {
 }
 
 .status-active {
-  background: #e3f2fd;
-  padding: 1.5rem;
-  border-radius: 8px;
+  background: var(--color-info-light);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
   text-align: center;
 }
 
 .progress-indicator {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.progress-indicator p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  margin: 0 auto 1rem;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #2c3e50;
+  margin: 0 auto var(--spacing-md);
+  border: 4px solid var(--color-border-light);
+  border-top: 4px solid var(--color-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -418,84 +456,98 @@ section {
 }
 
 .tick-count {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
 }
 
 .count-label {
   display: block;
-  font-size: 1rem;
-  font-weight: normal;
-  margin-bottom: 0.5rem;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text-secondary);
 }
 
 .count-value {
-  color: #2c3e50;
-  font-size: 2rem;
+  color: var(--color-primary);
+  font-size: var(--font-size-3xl);
 }
 
 .count-required {
-  color: #666;
-  font-size: 1.25rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
 }
 
 .status-message {
-  padding: 1rem;
-  border-radius: 8px;
-  margin-top: 1rem;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  margin-top: var(--spacing-md);
+  line-height: var(--line-height-normal);
 }
 
 .status-message.info {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: var(--color-info-light);
+  color: var(--color-info);
 }
 
 .status-message.success {
-  background: #e8f5e9;
-  color: #388e3c;
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
 }
 
 .status-message.warning {
-  background: #fff3e0;
-  color: #f57c00;
+  background: var(--color-warning-light);
+  color: var(--color-warning-dark);
 }
 
 .status-message.error {
-  background: #ffebee;
-  color: #d32f2f;
+  background: var(--color-danger-light);
+  color: var(--color-danger-dark);
 }
 
 /* Navigation */
 .navigation-section {
   display: flex;
-  gap: 1rem;
+  gap: var(--spacing-md);
   justify-content: center;
 }
 
 .nav-button {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  border: 2px solid #2c3e50;
-  background: #2c3e50;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  border: var(--border-width-thick) solid var(--color-primary);
+  background: var(--color-primary);
   color: white;
-  border-radius: 8px;
+  border-radius: var(--border-radius-lg);
   cursor: pointer;
-  transition: all 0.2s;
-  min-height: 44px;
+  transition: all var(--transition-base);
+  
+  /* Touch-friendly minimum size */
+  min-height: var(--touch-target-min);
+  
+  /* Prevent accidental double-tap zoom */
+  touch-action: manipulation;
 }
 
 .nav-button:hover:not(:disabled) {
-  background: #1a252f;
-  border-color: #1a252f;
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.nav-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .nav-button.secondary {
-  background: white;
-  color: #2c3e50;
+  background: var(--color-bg-primary);
+  color: var(--color-primary);
 }
 
 .nav-button.secondary:hover {
-  background: #f5f5f5;
+  background: var(--color-bg-secondary);
 }
 
 .nav-button:disabled {
@@ -506,7 +558,11 @@ section {
 /* Responsive Design */
 @media (max-width: 768px) {
   .calibration-page {
-    padding: 1rem;
+    padding: var(--spacing-md);
+  }
+  
+  h1 {
+    font-size: var(--font-size-xl);
   }
   
   .clock-size-buttons {
@@ -519,6 +575,50 @@ section {
   
   .nav-button {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .calibration-page {
+    padding: var(--spacing-sm);
+  }
+  
+  .clock-size-section {
+    padding: var(--spacing-md);
+  }
+  
+  .start-button,
+  .stop-button {
+    min-width: 150px;
+    font-size: var(--font-size-sm);
+  }
+  
+  .count-value {
+    font-size: var(--font-size-2xl);
+  }
+}
+
+/* Landscape orientation support */
+@media (orientation: landscape) and (max-height: 500px) {
+  .calibration-page {
+    padding: var(--spacing-md);
+  }
+  
+  h1 {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  section {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .clock-size-section {
+    padding: var(--spacing-md);
+  }
+  
+  .calibration-status {
+    min-height: 100px;
   }
 }
 </style>

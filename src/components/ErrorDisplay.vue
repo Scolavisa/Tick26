@@ -143,9 +143,9 @@ const handleLearnMore = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease-in;
+  padding: var(--spacing-lg);
+  z-index: var(--z-index-modal);
+  animation: fadeIn var(--transition-base);
 }
 
 @keyframes fadeIn {
@@ -158,13 +158,13 @@ const handleLearnMore = () => {
 }
 
 .error-content {
-  background-color: white;
-  border-radius: 12px;
-  padding: 24px;
+  background-color: var(--color-bg-primary);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-xl);
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  animation: slideUp 0.3s ease-out;
+  box-shadow: var(--shadow-xl);
+  animation: slideUp var(--transition-slow);
 }
 
 @keyframes slideUp {
@@ -181,8 +181,8 @@ const handleLearnMore = () => {
 .error-header {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 }
 
 .error-icon {
@@ -201,23 +201,23 @@ const handleLearnMore = () => {
 }
 
 .error-severity-critical {
-  background-color: #fee;
-  color: #c00;
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
 }
 
 .error-severity-error {
-  background-color: #fef0e6;
-  color: #d97706;
+  background-color: var(--color-warning-light);
+  color: var(--color-warning-dark);
 }
 
 .error-severity-warning {
-  background-color: #fef9e6;
-  color: #ca8a04;
+  background-color: var(--color-warning-light);
+  color: var(--color-warning);
 }
 
 .error-severity-info {
-  background-color: #e6f2ff;
-  color: #0066cc;
+  background-color: var(--color-info-light);
+  color: var(--color-info);
 }
 
 .error-text {
@@ -225,17 +225,17 @@ const handleLearnMore = () => {
 }
 
 .error-title {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1a1a1a;
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .error-details {
   margin: 0;
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
 }
 
 .error-close {
@@ -245,15 +245,26 @@ const handleLearnMore = () => {
   border: none;
   background: none;
   cursor: pointer;
-  color: #999;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s;
+  color: var(--color-text-light);
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-base);
+  
+  /* Touch-friendly minimum size */
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  
+  /* Prevent accidental double-tap zoom */
+  touch-action: manipulation;
 }
 
 .error-close:hover {
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.error-close:active {
+  transform: scale(0.95);
 }
 
 .error-close svg {
@@ -262,29 +273,29 @@ const handleLearnMore = () => {
 }
 
 .error-resolution {
-  margin-bottom: 20px;
-  padding: 16px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--border-radius-lg);
 }
 
 .error-resolution h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .error-resolution ol {
   margin: 0;
-  padding-left: 20px;
+  padding-left: var(--spacing-lg);
 }
 
 .error-resolution li {
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
 }
 
 .error-resolution li:last-child {
@@ -293,28 +304,34 @@ const handleLearnMore = () => {
 
 .error-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-sm);
   justify-content: flex-end;
 }
 
 .error-button {
-  padding: 10px 20px;
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-base);
+  
+  /* Touch-friendly minimum size */
   min-width: 80px;
+  min-height: var(--touch-target-min);
+  
+  /* Prevent accidental double-tap zoom */
+  touch-action: manipulation;
 }
 
 .error-button-primary {
-  background-color: #2c3e50;
+  background-color: var(--color-primary);
   color: white;
 }
 
 .error-button-primary:hover {
-  background-color: #1a252f;
+  background-color: var(--color-primary-dark);
 }
 
 .error-button-primary:active {
@@ -322,12 +339,12 @@ const handleLearnMore = () => {
 }
 
 .error-button-secondary {
-  background-color: #e5e5e5;
-  color: #333;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
 }
 
 .error-button-secondary:hover {
-  background-color: #d5d5d5;
+  background-color: var(--color-border);
 }
 
 .error-button-secondary:active {
@@ -337,15 +354,15 @@ const handleLearnMore = () => {
 /* Responsive design for mobile */
 @media (max-width: 768px) {
   .error-display {
-    padding: 16px;
+    padding: var(--spacing-md);
   }
   
   .error-content {
-    padding: 20px;
+    padding: var(--spacing-lg);
   }
   
   .error-header {
-    gap: 12px;
+    gap: var(--spacing-sm);
   }
   
   .error-icon {
@@ -354,11 +371,11 @@ const handleLearnMore = () => {
   }
   
   .error-title {
-    font-size: 16px;
+    font-size: var(--font-size-sm);
   }
   
   .error-details {
-    font-size: 13px;
+    font-size: var(--font-size-xs);
   }
   
   .error-actions {
@@ -370,10 +387,21 @@ const handleLearnMore = () => {
   }
 }
 
-/* Touch-friendly tap targets (44px minimum) */
-.error-button,
-.error-close {
-  min-height: 44px;
-  min-width: 44px;
+@media (max-width: 480px) {
+  .error-display {
+    padding: var(--spacing-sm);
+  }
+  
+  .error-content {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Landscape orientation support */
+@media (orientation: landscape) and (max-height: 500px) {
+  .error-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
 }
 </style>
