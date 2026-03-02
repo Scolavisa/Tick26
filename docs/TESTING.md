@@ -1,4 +1,6 @@
-# Test Instructions for Tick Tack Timer
+# Testing Guide
+
+This document provides comprehensive testing instructions for Tick Tack Timer.
 
 ## Running Tests
 
