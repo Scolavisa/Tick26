@@ -69,11 +69,13 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useCounter } from '../composables/useCounter'
 import { useSession } from '../composables/useSession'
 import { useAudio } from '../composables/useAudio'
+import { useCalibration } from '../composables/useCalibration'
 
 // Composables
 const counter = useCounter()
 const session = useSession()
 const audio = useAudio()
+const calibration = useCalibration()
 
 // Local state
 const showResetConfirm = ref(false)
@@ -109,6 +111,9 @@ const handleStart = async () => {
       // Worklet might already be initialized, which is fine
       console.log('Worklet initialization:', error)
     }
+    
+    // Apply calibration settings to AudioManager
+    audio.setCalibration(calibration.sensitivity.value, calibration.threshold.value)
     
     audio.startProcessing()
   } catch (error) {

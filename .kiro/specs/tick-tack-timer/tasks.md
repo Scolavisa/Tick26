@@ -521,55 +521,55 @@ The implementation uses Vue 3 with Composition API, TypeScript, AudioWorklet for
     - **Validates: Requirements 3.2**
     - Test that main thread remains responsive during audio processing
 
-- [ ] 20. Final integration and wiring
-  - [ ] 20.1 Wire AudioManager to composables
+- [x] 20. Final integration and wiring
+  - [x] 20.1 Wire AudioManager to composables
     - Connect AudioManager tick detection callback to useCounter increment
     - Ensure calibration settings flow from useCalibration to AudioManager
     - Ensure device selection flows from useAudio to AudioManager
     - _Requirements: 3.3, 4.3_
   
-  - [ ] 20.2 Update main.ts
+  - [x] 20.2 Update main.ts
     - Import and mount App.vue
     - Import router
     - Import global styles
     - Register service worker
     - _Requirements: 10.1_
   
-  - [ ] 20.3 Update index.html
+  - [x] 20.3 Update index.html
     - Set appropriate title and meta tags
     - Add manifest link
     - Add theme-color meta tag
     - Ensure proper viewport configuration for mobile
     - _Requirements: 6.1, 15.1_
 
-- [ ] 21. Checkpoint - Full application integration
+- [x] 21. Checkpoint - Full application integration
   - Test complete user workflow from start to finish
   - Test all error scenarios
   - Test responsive behavior on different screen sizes
   - Test PWA installation (manual)
   - Ensure all tests pass, ask the user if questions arise
 
-- [ ] 22. Build configuration and deployment
-  - [ ] 22.1 Configure Vite for production build
+- [x] 22. Build configuration and deployment
+  - [x] 22.1 Configure Vite for production build
     - Update vite.config.ts with build optimizations
     - Configure base URL for GitHub Pages: https://tick.scolavisa.eu
     - Configure AssemblyScript build to output to public directory
     - Ensure WASM and AudioWorklet files are included in build
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
   
-  - [ ] 22.2 Create build scripts
+  - [x] 22.2 Create build scripts
     - Add build script to package.json: "build": "tsc && vite build"
     - Add AssemblyScript build script: "build:wasm": "asc assembly/tick-detector.ts -o public/tick-detector.wasm"
     - Add combined build script: "build:all": "yarn build:wasm && yarn build"
     - _Requirements: 9.2_
   
-  - [ ] 22.3 Create deployment workflow
+  - [x] 22.3 Create deployment workflow
     - Create .github/workflows/deploy.yml for GitHub Actions
     - Configure workflow to build and deploy to GitHub Pages
     - Set up deployment to custom domain: https://tick.scolavisa.eu
     - _Requirements: 9.3, 9.4_
   
-  - [ ] 22.4 Test production build
+  - [x] 22.4 Test production build
     - Run production build locally
     - Test built application with local server
     - Verify all assets load correctly

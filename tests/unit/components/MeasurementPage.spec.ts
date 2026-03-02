@@ -23,10 +23,22 @@ vi.mock('../../../src/composables/useAudio', () => ({
   useAudio: () => ({
     startProcessing: vi.fn(),
     stopProcessing: vi.fn(),
+    initializeWorklet: vi.fn().mockResolvedValue(undefined),
+    setCalibration: vi.fn(),
     onTickDetected: vi.fn((callback: () => void) => {
       // Store callback for manual triggering in tests
       ;(global as any).__tickCallback = callback
     })
+  })
+}))
+
+vi.mock('../../../src/composables/useCalibration', () => ({
+  useCalibration: () => ({
+    sensitivity: { value: 1.0 },
+    threshold: { value: 0.08 },
+    clockSize: { value: 'medium' },
+    isCalibrating: { value: false },
+    calibrationProgress: { value: 0 }
   })
 }))
 

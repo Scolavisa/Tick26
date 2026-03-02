@@ -179,6 +179,17 @@ onMounted(async () => {
   if (permissionGranted.value) {
     hasRequestedPermission.value = true;
     await handleRefreshDevices();
+    
+    // If we have a saved device selection, re-initialize it
+    if (selectedDevice.value) {
+      try {
+        await selectDevice(selectedDevice.value);
+      } catch (error) {
+        // If re-initialization fails, clear the saved device
+        console.error('Failed to re-initialize saved device:', error);
+        errorMessage.value = 'Failed to restore previous microphone selection. Please select again.';
+      }
+    }
   }
 });
 </script>

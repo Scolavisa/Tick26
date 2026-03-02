@@ -71,11 +71,22 @@ To test the production build locally:
 yarn build:wasm
 yarn build
 
+# Verify the build
+yarn verify:build
+
 # Preview the production build
 yarn preview
 ```
 
 Then open http://localhost:4173 to test the production build.
+
+The `verify:build` script checks:
+- All required files are present (HTML, manifest, service worker, WASM, AudioWorklet, icons)
+- Manifest.json has all required PWA fields
+- Service worker implements caching strategies
+- HTML includes PWA meta tags
+- WASM module is valid
+- AudioWorklet script is properly configured
 
 ### Troubleshooting
 
@@ -102,6 +113,7 @@ Before pushing to main:
 - [ ] All tests pass: `yarn test:run`
 - [ ] WASM builds: `yarn build:wasm`
 - [ ] App builds: `yarn build`
+- [ ] Build verification passes: `yarn verify:build`
 - [ ] No TypeScript errors: `yarn build`
 - [ ] Changes committed to git
 - [ ] Push to main branch

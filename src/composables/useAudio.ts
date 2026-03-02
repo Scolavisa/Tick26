@@ -43,6 +43,9 @@ export function useAudio() {
     const savedDeviceId = localStorage.getItem(STORAGE_KEY);
     if (savedDeviceId) {
       selectedDevice.value = savedDeviceId;
+      // If we have a saved device, permission must have been granted previously
+      // (we'll verify this when the device is actually used)
+      permissionGranted.value = true;
     }
     
     isSharedStateInitialized = true;
@@ -149,6 +152,10 @@ export function useAudio() {
       // Update reactive state
       selectedDevice.value = deviceId;
       isInitialized.value = true;
+      
+      // If initialization succeeded, permission must have been granted
+      // (otherwise getUserMedia would have failed)
+      permissionGranted.value = true;
       
       // Get the AudioContext from the manager
       const state = manager.getState();
