@@ -29,6 +29,7 @@ vi.mock('../../src/composables/useAudio', () => ({
     enumerateDevices: vi.fn(),
     selectDevice: vi.fn(),
     onTickDetected: vi.fn(),
+    onVolumeLevel: vi.fn(),
     setCalibration: vi.fn(),
     initializeWorklet: vi.fn(),
     startProcessing: vi.fn(),

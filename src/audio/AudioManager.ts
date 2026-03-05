@@ -21,6 +21,7 @@ export class AudioManager {
   private sourceNode: MediaStreamAudioSourceNode | null = null;
   private wasmModule: WebAssembly.Module | null = null;
   private tickCallback: ((event: TickEvent) => void) | null = null;
+  private volumeCallback: ((level: number, threshold: number) => void) | null = null;
   private isProcessing = false;
 
   /**
@@ -221,6 +222,16 @@ export class AudioManager {
   }
 
   /**
+   * Register a callback for volume level updates
+   * The callback will be invoked periodically with the current audio level
+   * 
+   * @param callback - Function to call with the current RMS level and detection threshold
+   */
+  onVolumeLevel(callback: (level: number, threshold: number) => void): void {
+    this.volumeCallback = callback;
+  }
+
+  /**
    * Clean up all audio resources
    * Stops processing, closes streams, and releases AudioContext
    */
@@ -255,6 +266,7 @@ export class AudioManager {
 
     // Clear callback
     this.tickCallback = null;
+    this.volumeCallback = null;
     this.wasmModule = null;
     this.isProcessing = false;
   }
@@ -290,6 +302,13 @@ export class AudioManager {
             confidence: data.confidence
           };
           this.tickCallback(tickEvent);
+        }
+        break;
+
+      case 'volumeUpdate':
+        // Forward volume level to the application layer
+        if (this.volumeCallback) {
+          this.volumeCallback(data.level, data.threshold);
         }
         break;
 

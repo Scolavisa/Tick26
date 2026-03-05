@@ -34,6 +34,12 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
     // Update duplicate window based on actual sample rate
     this.duplicateWindowSamples = Math.floor(this.sampleRate * 0.05); // 50ms
     
+    // Volume level reporting
+    // Send a volumeUpdate message roughly every 100ms
+    // 128 is the standard AudioWorklet render quantum size (samples per block)
+    this.volumeReportInterval = Math.max(1, Math.round(this.sampleRate * 0.1 / 128));
+    this.blockCount = 0;
+    
     // Message handler for communication with main thread
     this.port.onmessage = (event) => {
       this.handleMessage(event.data);
@@ -209,6 +215,18 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
       
       // Update current sample time
       this.currentSampleTime += sampleCount;
+
+      // Periodically report audio level to main thread for UI feedback
+      this.blockCount++;
+      if (this.blockCount >= this.volumeReportInterval) {
+        this.blockCount = 0;
+        const volumeRms = this.wasmExports.calculateRMS(samplesOffset, sampleCount);
+        this.port.postMessage({
+          type: 'volumeUpdate',
+          level: volumeRms,
+          threshold: this.threshold
+        });
+      }
       
     } catch (error) {
       console.error('AudioWorklet: Error processing audio:', error);
