@@ -345,6 +345,17 @@ export function useAudio() {
   };
 
   /**
+   * Register a callback for periodic volume level updates
+   * Useful for showing real-time audio level feedback in the UI
+   * 
+   * @param callback - Function to call with current RMS level and detection threshold
+   */
+  const onVolumeLevel = (callback: (level: number, threshold: number) => void): void => {
+    const manager = getAudioManager();
+    manager.onVolumeLevel(callback);
+  };
+
+  /**
    * Set calibration parameters for tick detection
    * 
    * @param sensitivity - Sensitivity multiplier (0.1 - 2.0)
@@ -397,6 +408,7 @@ export function useAudio() {
     stopProcessing,
     cleanup,
     onTickDetected,
+    onVolumeLevel,
     setCalibration,
     getState,
     clearError

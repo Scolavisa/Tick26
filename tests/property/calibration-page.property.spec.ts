@@ -64,6 +64,7 @@ vi.mock('../../src/composables/useAudio', () => ({
     isInitialized: mockIsInitialized,
     permissionGranted: mockPermissionGranted,
     onTickDetected: mockOnTickDetected,
+    onVolumeLevel: vi.fn(),
     setCalibration: mockSetCalibration,
     initializeWorklet: mockInitializeWorklet,
     startProcessing: mockStartProcessing,

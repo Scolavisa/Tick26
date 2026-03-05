@@ -44,7 +44,30 @@
           <div class="spinner"></div>
           <p>Listening for ticks...</p>
         </div>
-        <div class="tick-count">
+
+        <!-- Real-time audio level meter -->
+        <div class="audio-level-meter">
+          <div class="meter-label">Audio Level</div>
+          <div class="meter-bar-track">
+            <div
+              class="meter-bar-fill"
+              :class="{ 'tick-flash': tickFlash }"
+              :style="{ width: audioLevelPercent + '%' }"
+            ></div>
+            <div
+              class="meter-threshold-marker"
+              :style="{ left: audioThresholdPercent + '%' }"
+              title="Detection threshold"
+            ></div>
+          </div>
+          <div class="meter-hint">
+            <span>Quiet</span>
+            <span class="threshold-label">▲ Threshold</span>
+            <span>Loud</span>
+          </div>
+        </div>
+
+        <div class="tick-count" :class="{ 'tick-flash': tickFlash }">
           <span class="count-label">Detected Ticks:</span>
           <span class="count-value">{{ calibrationProgress }}</span>
           <span class="count-required">/ {{ minTicksRequired }}</span>
@@ -104,6 +127,7 @@ const {
   isInitialized,
   permissionGranted,
   onTickDetected,
+  onVolumeLevel,
   setCalibration,
   initializeWorklet,
   startProcessing,
@@ -114,6 +138,10 @@ const {
 const statusMessage = ref<string>('');
 const statusMessageType = ref<'info' | 'success' | 'warning' | 'error'>('info');
 const timeoutId = ref<number | null>(null);
+const audioLevel = ref<number>(0);
+const audioThreshold = ref<number>(0.08);
+const tickFlash = ref<boolean>(false);
+let tickFlashTimeoutId: number | null = null;
 
 // Constants
 const minTicksRequired = 10;
@@ -135,6 +163,21 @@ const canNavigateToMeasurement = computed(() => {
   return isCalibrated.value && !isCalibrating.value;
 });
 
+// Audio level bar: scale level to percentage, capped at 100%
+// Use a non-linear scale so small signals are still visible
+const audioLevelPercent = computed(() => {
+  if (audioLevel.value <= 0) return 0;
+  // Convert to dB-like scale: amplify small values
+  const scaled = Math.min(1, audioLevel.value * 20);
+  return Math.round(scaled * 100);
+});
+
+const audioThresholdPercent = computed(() => {
+  if (audioThreshold.value <= 0) return 0;
+  const scaled = Math.min(1, audioThreshold.value * 20);
+  return Math.round(scaled * 100);
+});
+
 // Methods
 const selectClockSize = (size: ClockSize) => {
   setClockSize(size);
@@ -142,10 +185,19 @@ const selectClockSize = (size: ClockSize) => {
   statusMessageType.value = 'info';
 };
 
+const clearTickFlash = () => {
+  if (tickFlashTimeoutId !== null) {
+    clearTimeout(tickFlashTimeoutId);
+    tickFlashTimeoutId = null;
+  }
+  tickFlash.value = false;
+};
+
 const handleStartCalibration = async () => {
   try {
     // Clear any previous status
     statusMessage.value = '';
+    audioLevel.value = 0;
     
     // Initialize worklet and WASM if not already done
     try {
@@ -186,11 +238,17 @@ const handleStopCalibration = () => {
     timeoutId.value = null;
   }
   
+  // Clear tick flash timeout
+  clearTickFlash();
+  
   // Stop audio processing
   stopProcessing();
   
   // Stop calibration
   stopCalibration();
+  
+  // Reset audio level display
+  audioLevel.value = 0;
   
   statusMessage.value = 'Calibration cancelled.';
   statusMessageType.value = 'warning';
@@ -210,6 +268,16 @@ const handleTickDetected = (event: TickEvent) => {
     return;
   }
   
+  // Flash the tick indicator briefly
+  tickFlash.value = true;
+  if (tickFlashTimeoutId !== null) {
+    clearTimeout(tickFlashTimeoutId);
+  }
+  tickFlashTimeoutId = window.setTimeout(() => {
+    tickFlash.value = false;
+    tickFlashTimeoutId = null;
+  }, 200);
+  
   // Record the tick sample
   recordTickSample(event.amplitude);
   
@@ -227,6 +295,10 @@ const handleTickDetected = (event: TickEvent) => {
     // Stop audio processing
     stopProcessing();
     
+    // Reset audio level display
+    audioLevel.value = 0;
+    clearTickFlash();
+    
     if (success) {
       // Send calibration settings to AudioManager
       setCalibration(sensitivity.value, threshold.value);
@@ -241,6 +313,14 @@ const handleTickDetected = (event: TickEvent) => {
   }
 };
 
+const handleVolumeLevel = (level: number, threshold: number) => {
+  if (!isCalibrating.value) {
+    return;
+  }
+  audioLevel.value = level;
+  audioThreshold.value = threshold;
+};
+
 const navigateToMeasurement = () => {
   router.push({ name: 'measurement' });
 };
@@ -253,6 +333,9 @@ const navigateToSettings = () => {
 onMounted(() => {
   // Register tick detection callback
   onTickDetected(handleTickDetected);
+  
+  // Register volume level callback for real-time audio feedback
+  onVolumeLevel(handleVolumeLevel);
   
   // Show initial status
   if (!isInitialized.value) {
@@ -272,6 +355,9 @@ onUnmounted(() => {
   if (timeoutId.value !== null) {
     clearTimeout(timeoutId.value);
   }
+  
+  // Clean up tick flash timeout
+  clearTickFlash();
   
   // Stop calibration if active
   if (isCalibrating.value) {
@@ -458,6 +544,11 @@ section {
 .tick-count {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
+  transition: color var(--transition-fast, 0.15s);
+}
+
+.tick-count.tick-flash .count-value {
+  color: var(--color-success);
 }
 
 .count-label {
@@ -476,6 +567,62 @@ section {
 .count-required {
   color: var(--color-text-secondary);
   font-size: var(--font-size-lg);
+}
+
+/* Audio Level Meter */
+.audio-level-meter {
+  margin-bottom: var(--spacing-md);
+}
+
+.meter-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs, 4px);
+  text-align: left;
+}
+
+.meter-bar-track {
+  position: relative;
+  height: 16px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm, 4px);
+  overflow: visible;
+}
+
+.meter-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--border-radius-sm, 4px);
+  transition: width 0.1s linear, background-color 0.15s;
+  min-width: 2px;
+}
+
+.meter-bar-fill.tick-flash {
+  background: var(--color-success);
+}
+
+.meter-threshold-marker {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: var(--color-warning, #f59e0b);
+  border-radius: 1px;
+  transform: translateX(-50%);
+}
+
+.meter-hint {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs, 11px);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs, 4px);
+}
+
+.threshold-label {
+  color: var(--color-warning, #f59e0b);
+  font-size: var(--font-size-xs, 11px);
 }
 
 .status-message {

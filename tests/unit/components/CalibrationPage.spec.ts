@@ -29,6 +29,7 @@ const mockCompleteCalibration = vi.fn(() => true);
 const mockRecordTickSample = vi.fn();
 
 const mockOnTickDetected = vi.fn();
+const mockOnVolumeLevel = vi.fn();
 const mockSetCalibration = vi.fn();
 const mockInitializeWorklet = vi.fn();
 const mockStartProcessing = vi.fn();
@@ -56,6 +57,7 @@ vi.mock('../../../src/composables/useAudio', () => ({
     isInitialized: mockIsInitialized,
     permissionGranted: mockPermissionGranted,
     onTickDetected: mockOnTickDetected,
+    onVolumeLevel: mockOnVolumeLevel,
     setCalibration: mockSetCalibration,
     initializeWorklet: mockInitializeWorklet,
     startProcessing: mockStartProcessing,
