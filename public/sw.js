@@ -1,8 +1,9 @@
 // Service Worker for Tick Tack Timer PWA
 // Provides offline functionality and caching
+// Build: __BUILD_TIMESTAMP__
 
-const CACHE_NAME = 'tick-tack-timer-v1';
-const RUNTIME_CACHE = 'tick-tack-runtime-v1';
+const CACHE_NAME = 'tick-tack-timer-__BUILD_TIMESTAMP__';
+const RUNTIME_CACHE = 'tick-tack-runtime-__BUILD_TIMESTAMP__';
 
 // App shell - critical files to cache on install
 const APP_SHELL = [
@@ -70,6 +71,25 @@ self.addEventListener('fetch', (event) => {
 
   // Skip cross-origin requests
   if (url.origin !== location.origin) {
+    return;
+  }
+
+  // Network-first strategy for HTML navigation to always deliver latest version
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request)
+            .then((cached) => cached || caches.match('/index.html'));
+        })
+    );
     return;
   }
 
