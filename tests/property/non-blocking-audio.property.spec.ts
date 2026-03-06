@@ -127,7 +127,7 @@ describe('Non-blocking audio processing properties', () => {
           await audioManager.initialize();
           await audioManager.loadWorklet();
           await audioManager.loadWasm();
-          audioManager.setCalibration(sensitivity, threshold);
+          audioManager.setCalibration(sensitivity, threshold, 500, 8000);
 
           // Start audio processing
           audioManager.start();

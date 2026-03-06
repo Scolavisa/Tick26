@@ -36,6 +36,8 @@ vi.mock('../../../src/composables/useCalibration', () => ({
   useCalibration: () => ({
     sensitivity: { value: 1.0 },
     threshold: { value: 0.08 },
+    lowCutoff: { value: 500 },
+    highCutoff: { value: 8000 },
     clockSize: { value: 'medium' },
     isCalibrating: { value: false },
     calibrationProgress: { value: 0 }

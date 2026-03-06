@@ -18,6 +18,49 @@
       </div>
     </section>
 
+    <!-- Band-Pass Filter Settings -->
+    <section class="filter-section">
+      <h2>Band-Pass Filter</h2>
+      <p class="filter-description">
+        Adjust the frequency range used to detect ticks. Disable a cutoff to create
+        a high-pass or low-pass filter instead of a band-pass filter.
+      </p>
+      <div class="filter-controls">
+        <div class="filter-field">
+          <label for="low-cutoff">Low Cut-off (High-pass)</label>
+          <select
+            id="low-cutoff"
+            v-model.number="lowCutoff"
+            :disabled="isCalibrating"
+            class="filter-select"
+          >
+            <option :value="0">Off (no high-pass)</option>
+            <option :value="100">100 Hz</option>
+            <option :value="200">200 Hz</option>
+            <option :value="500">500 Hz</option>
+            <option :value="1000">1 kHz</option>
+            <option :value="2000">2 kHz</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="high-cutoff">High Cut-off (Low-pass)</label>
+          <select
+            id="high-cutoff"
+            v-model.number="highCutoff"
+            :disabled="isCalibrating"
+            class="filter-select"
+          >
+            <option :value="0">Off (no low-pass)</option>
+            <option :value="2000">2 kHz</option>
+            <option :value="4000">4 kHz</option>
+            <option :value="8000">8 kHz</option>
+            <option :value="12000">12 kHz</option>
+            <option :value="16000">16 kHz</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
     <!-- Calibration Controls -->
     <section class="calibration-controls">
       <button
@@ -116,6 +159,8 @@ const {
   isCalibrated,
   sensitivity,
   threshold,
+  lowCutoff,
+  highCutoff,
   setClockSize,
   startCalibration,
   stopCalibration,
@@ -301,8 +346,8 @@ const handleTickDetected = (event: TickEvent) => {
     
     if (success) {
       // Send calibration settings to AudioManager
-      setCalibration(sensitivity.value, threshold.value);
-      console.log('Calibration complete:', { sensitivity: sensitivity.value, threshold: threshold.value });
+      setCalibration(sensitivity.value, threshold.value, lowCutoff.value, highCutoff.value);
+      console.log('Calibration complete:', { sensitivity: sensitivity.value, threshold: threshold.value, lowCutoff: lowCutoff.value, highCutoff: highCutoff.value });
       
       statusMessage.value = 'Calibration completed successfully! You can now proceed to measurement.';
       statusMessageType.value = 'success';
@@ -389,6 +434,61 @@ h2 {
 
 section {
   margin-bottom: var(--spacing-xl);
+}
+
+/* Band-Pass Filter Section */
+.filter-section {
+  background: var(--color-bg-tertiary);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+}
+
+.filter-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
+  line-height: var(--line-height-normal);
+}
+
+.filter-controls {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.filter-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs, 4px);
+}
+
+.filter-field label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.filter-select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  border: var(--border-width-thick) solid var(--color-border);
+  border-radius: var(--border-radius-md, 6px);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  min-height: var(--touch-target-min);
+  touch-action: manipulation;
+  transition: border-color var(--transition-base);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.filter-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Clock Size Selection */
@@ -713,6 +813,10 @@ section {
   }
   
   .clock-size-buttons {
+    flex-direction: column;
+  }
+  
+  .filter-controls {
     flex-direction: column;
   }
   

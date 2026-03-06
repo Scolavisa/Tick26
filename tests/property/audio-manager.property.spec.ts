@@ -114,7 +114,7 @@ describe('AudioManager properties', () => {
           await audioManager.loadWasm();
 
           // Set calibration parameters
-          audioManager.setCalibration(sensitivity, threshold);
+          audioManager.setCalibration(sensitivity, threshold, 500, 8000);
 
           // Start audio processing
           audioManager.start();
@@ -141,7 +141,9 @@ describe('AudioManager properties', () => {
             expect.objectContaining({
               type: 'setCalibration',
               sensitivity,
-              threshold
+              threshold,
+              lowCutoff: 500,
+              highCutoff: 8000
             })
           );
 
@@ -265,13 +267,15 @@ describe('AudioManager properties', () => {
 
           // Apply each calibration
           for (const cal of calibrations) {
-            audioManager.setCalibration(cal.sensitivity, cal.threshold);
+            audioManager.setCalibration(cal.sensitivity, cal.threshold, 500, 8000);
 
             // Property: Each calibration should be sent to the worklet
             expect(workletNode.port.postMessage).toHaveBeenCalledWith({
               type: 'setCalibration',
               sensitivity: cal.sensitivity,
-              threshold: cal.threshold
+              threshold: cal.threshold,
+              lowCutoff: 500,
+              highCutoff: 8000
             });
 
             vi.clearAllMocks();

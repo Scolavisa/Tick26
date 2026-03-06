@@ -30,6 +30,8 @@ export interface CalibrationSettings {
   clockSize: ClockSize;
   sensitivity: number;        // Range: 0.1 - 2.0
   threshold: number;          // Range: 0.01 - 0.5 (RMS amplitude)
+  lowCutoff: number;          // High-pass edge in Hz (0 = off)
+  highCutoff: number;         // Low-pass edge in Hz (0 = off)
   expectedFrequency: number;  // Expected ticks per second
   calibratedAt: number;       // Timestamp of calibration
 }

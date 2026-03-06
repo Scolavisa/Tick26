@@ -360,10 +360,12 @@ export function useAudio() {
    * 
    * @param sensitivity - Sensitivity multiplier (0.1 - 2.0)
    * @param threshold - RMS amplitude threshold (0.01 - 0.5)
+   * @param lowCutoff - High-pass edge in Hz (0 = bypass)
+   * @param highCutoff - Low-pass edge in Hz (0 = bypass)
    */
-  const setCalibration = (sensitivity: number, threshold: number): void => {
+  const setCalibration = (sensitivity: number, threshold: number, lowCutoff: number, highCutoff: number): void => {
     const manager = getAudioManager();
-    manager.setCalibration(sensitivity, threshold);
+    manager.setCalibration(sensitivity, threshold, lowCutoff, highCutoff);
   };
 
   /**

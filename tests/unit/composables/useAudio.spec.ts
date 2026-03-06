@@ -456,7 +456,7 @@ describe('useAudio composable', () => {
       await audio.initializeWorklet();
 
       // Should not throw
-      expect(() => audio.setCalibration(1.5, 0.1)).not.toThrow();
+      expect(() => audio.setCalibration(1.5, 0.1, 500, 8000)).not.toThrow();
     });
   });
 

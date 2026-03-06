@@ -4,16 +4,20 @@
 // Exports:
 // - detectTick: main entry point for tick detection
 // - calculateRMS: helper to compute RMS amplitude
-// - applyHighPassFilter: in-place high-pass filter (~500 Hz cutoff)
+// - applyHighPassFilter: in-place high-pass filter (parameterized cutoff)
+// - applyLowPassFilter: in-place low-pass filter (parameterized cutoff)
+// - applyBandPassFilter: in-place band-pass filter (HP then LP stage)
 
 // Simple in-place first-order high-pass filter.
 // Assumes a nominal sample rate of 48000 Hz, which is typical for Web Audio.
-// Takes a pointer to float samples in memory
+// Takes a pointer to float samples in memory.
+// cutoff: cutoff frequency in Hz; pass 0.0 to bypass (no filtering).
 export function applyHighPassFilter(
   samplesPtr: usize,
-  sampleCount: i32
+  sampleCount: i32,
+  cutoff: f32
 ): void {
-  if (sampleCount <= 0) {
+  if (sampleCount <= 0 || cutoff <= 0.0) {
     return;
   }
 
@@ -24,7 +28,6 @@ export function applyHighPassFilter(
   // where:
   //   rc = 1 / (2 * PI * cutoff)
   //   dt = 1 / sampleRate
-  const cutoff: f32 = 500.0;
   const sampleRate: f32 = 48000.0;
   const rc: f32 = 1.0 / (2.0 * Mathf.PI * cutoff);
   const dt: f32 = 1.0 / sampleRate;
@@ -41,6 +44,56 @@ export function applyHighPassFilter(
     xPrev = x;
     yPrev = y;
   }
+}
+
+// Simple in-place first-order low-pass filter.
+// Assumes a nominal sample rate of 48000 Hz, which is typical for Web Audio.
+// Takes a pointer to float samples in memory.
+// cutoff: cutoff frequency in Hz; pass 0.0 to bypass (no filtering).
+export function applyLowPassFilter(
+  samplesPtr: usize,
+  sampleCount: i32,
+  cutoff: f32
+): void {
+  if (sampleCount <= 0 || cutoff <= 0.0) {
+    return;
+  }
+
+  // Low-pass filter design:
+  //   y[n] = alpha * x[n] + (1 - alpha) * y[n - 1]
+  // with:
+  //   alpha = dt / (rc + dt)
+  // where:
+  //   rc = 1 / (2 * PI * cutoff)
+  //   dt = 1 / sampleRate
+  const sampleRate: f32 = 48000.0;
+  const rc: f32 = 1.0 / (2.0 * Mathf.PI * cutoff);
+  const dt: f32 = 1.0 / sampleRate;
+  const alpha: f32 = dt / (rc + dt);
+
+  let yPrev: f32 = load<f32>(samplesPtr);
+
+  for (let i: i32 = 0; i < sampleCount; i++) {
+    const offset = samplesPtr + (i << 2); // i * 4 bytes (f32)
+    const x: f32 = load<f32>(offset);
+    const y: f32 = alpha * x + (1.0 - alpha) * yPrev;
+    store<f32>(offset, y);
+    yPrev = y;
+  }
+}
+
+// Apply a band-pass filter by chaining a high-pass and a low-pass stage.
+// lowCutoff: high-pass edge in Hz (0 = no high-pass / bypass)
+// highCutoff: low-pass edge in Hz (0 = no low-pass / bypass)
+// Passing 0 for both cutoffs leaves the signal unchanged.
+export function applyBandPassFilter(
+  samplesPtr: usize,
+  sampleCount: i32,
+  lowCutoff: f32,
+  highCutoff: f32
+): void {
+  applyHighPassFilter(samplesPtr, sampleCount, lowCutoff);
+  applyLowPassFilter(samplesPtr, sampleCount, highCutoff);
 }
 
 // Compute RMS (Root Mean Square) amplitude for the given samples.
@@ -67,11 +120,14 @@ export function calculateRMS(
 // Main entry point used by the AudioWorklet to determine if a tick occurred.
 //
 // The function:
-// 1. Applies a high-pass filter to isolate tick frequencies
+// 1. Applies a band-pass filter to isolate tick frequencies
 // 2. Computes RMS amplitude of the filtered signal
 // 3. Compares RMS against threshold scaled by sensitivity
 //
-// Takes a pointer to float samples in memory
+// Takes a pointer to float samples in memory.
+//
+// lowCutoff: high-pass edge in Hz (0 = no high-pass / bypass)
+// highCutoff: low-pass edge in Hz (0 = no low-pass / bypass)
 //
 // Returns:
 // - true when a potential Tick_Event is detected
@@ -84,7 +140,9 @@ export function detectTick(
   samplesPtr: usize,
   sampleCount: i32,
   threshold: f32,
-  sensitivity: f32
+  sensitivity: f32,
+  lowCutoff: f32,
+  highCutoff: f32
 ): bool {
   if (sampleCount <= 0) {
     return false;
@@ -98,8 +156,8 @@ export function detectTick(
     effectiveSensitivity = 2.0;
   }
 
-  // Step 1: Filter low-frequency components.
-  applyHighPassFilter(samplesPtr, sampleCount);
+  // Step 1: Apply band-pass filter to isolate tick frequencies.
+  applyBandPassFilter(samplesPtr, sampleCount, lowCutoff, highCutoff);
 
   // Step 2: Compute RMS amplitude of filtered signal.
   const rms: f32 = calculateRMS(samplesPtr, sampleCount);

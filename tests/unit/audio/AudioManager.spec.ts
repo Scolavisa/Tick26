@@ -289,13 +289,15 @@ describe('AudioManager', () => {
     });
 
     it('sends calibration settings to worklet', () => {
-      audioManager.setCalibration(1.5, 0.1);
+      audioManager.setCalibration(1.5, 0.1, 500, 8000);
 
       const workletNode = (audioManager as any).workletNode;
       expect(workletNode.port.postMessage).toHaveBeenCalledWith({
         type: 'setCalibration',
         sensitivity: 1.5,
-        threshold: 0.1
+        threshold: 0.1,
+        lowCutoff: 500,
+        highCutoff: 8000
       });
     });
 
@@ -304,7 +306,7 @@ describe('AudioManager', () => {
 
       // Should not throw
       expect(() => {
-        uninitializedManager.setCalibration(1.0, 0.08);
+        uninitializedManager.setCalibration(1.0, 0.08, 500, 8000);
       }).not.toThrow();
     });
   });
