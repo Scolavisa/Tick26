@@ -2,6 +2,11 @@
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+
+const buildTimestamp = new Date(__BUILD_TIMESTAMP__).toLocaleString(undefined, {
+  year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit',
+})
 </script>
 
 <template>
@@ -21,6 +26,11 @@ const route = useRoute()
     <main class="content">
       <router-view />
     </main>
+
+    <footer class="footer">
+      <span>created by <a href="https://scolavisa.eu" target="_blank" rel="noopener noreferrer">Scolavisa</a></span>
+      <span class="footer-build">last build: {{ buildTimestamp }}</span>
+    </footer>
   </div>
 </template>
 
@@ -119,5 +129,31 @@ const route = useRoute()
     padding: var(--spacing-sm);
     font-size: var(--font-size-xs);
   }
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-primary);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.footer a {
+  color: var(--color-secondary-light);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.footer-build {
+  font-size: 0.7rem;
+  opacity: 0.8;
 }
 </style>
