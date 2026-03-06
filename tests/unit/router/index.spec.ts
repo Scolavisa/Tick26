@@ -4,9 +4,9 @@ import router from '../../../src/router'
 
 describe('Router Configuration', () => {
   describe('Route Definitions', () => {
-    it('should have three routes defined', () => {
+    it('should have four routes defined', () => {
       const routes = router.getRoutes()
-      expect(routes).toHaveLength(3)
+      expect(routes).toHaveLength(4)
     })
 
     it('should have a measurement route at /', () => {
@@ -25,6 +25,11 @@ describe('Router Configuration', () => {
       const route = router.resolve('/calibration')
       expect(route.name).toBe('calibration')
       expect(route.path).toBe('/calibration')
+    })
+    it('should have a catch-all route that redirects to /', () => {
+      const catchAllRoute = router.getRoutes().find(r => r.path === '/:pathMatch(.*)*')
+      expect(catchAllRoute).toBeDefined()
+      expect(catchAllRoute?.redirect).toBe('/')
     })
   })
 
@@ -87,6 +92,12 @@ describe('Router Configuration', () => {
       expect(testRouter.currentRoute.value.name).toBe('measurement')
     })
 
+    it('should redirect unknown paths to measurement page', async () => {
+      await testRouter.push('/unknown-path')
+      expect(testRouter.currentRoute.value.name).toBe('measurement')
+      expect(testRouter.currentRoute.value.path).toBe('/')
+    })
+
     it('should handle navigation by route name', async () => {
       await testRouter.push({ name: 'measurement' })
       expect(testRouter.currentRoute.value.name).toBe('measurement')
@@ -108,8 +119,8 @@ describe('Router Configuration', () => {
 
     it('should have lazy-loaded components', () => {
       const routes = router.getRoutes()
-      routes.forEach(route => {
-        // All routes should have components (lazy-loaded via dynamic import)
+      routes.filter(route => !route.redirect).forEach(route => {
+        // All non-redirect routes should have components (lazy-loaded via dynamic import)
         expect(route.components).toBeDefined()
       })
     })

@@ -17,6 +17,10 @@ const router = createRouter({
       path: '/calibration',
       name: 'calibration',
       component: () => import('../pages/CalibrationPage.vue')
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/'
     }
   ]
 })
