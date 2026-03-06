@@ -165,7 +165,8 @@ const {
   startCalibration,
   stopCalibration,
   completeCalibration,
-  recordTickSample
+  recordTickSample,
+  getExpectedFrequency
 } = useCalibration();
 
 const {
@@ -188,9 +189,24 @@ const audioThreshold = ref<number>(0.08);
 const tickFlash = ref<boolean>(false);
 let tickFlashTimeoutId: number | null = null;
 
+// Auto-calibration state
+let workingThreshold = 0.005;
+let workingSensitivity = 1.5;
+let autoAdjustIntervalId: number | null = null;
+let calibrationStartTime = 0;
+
 // Constants
 const minTicksRequired = 10;
 const calibrationTimeout = 30000; // 30 seconds
+
+// Auto-calibration constants
+const CALIBRATION_START_THRESHOLD = 0.005;  // Start sensitive to catch quiet ticks
+const CALIBRATION_START_SENSITIVITY = 1.5;  // Start with elevated sensitivity
+const AUTO_ADJUST_INTERVAL_MS = 5000;       // Check every 5 seconds
+const MIN_THRESHOLD = 0.001;               // Minimum allowed threshold
+const MAX_SENSITIVITY = 2.0;              // Maximum allowed sensitivity
+const THRESHOLD_ADJUST_FACTOR = 0.65;     // Reduce threshold by 35% per step
+const SENSITIVITY_ADJUST_FACTOR = 1.3;    // Increase sensitivity by 30% per step
 
 // Clock size options
 const clockSizes = [
@@ -238,6 +254,45 @@ const clearTickFlash = () => {
   tickFlash.value = false;
 };
 
+const stopAutoAdjust = () => {
+  if (autoAdjustIntervalId !== null) {
+    clearInterval(autoAdjustIntervalId);
+    autoAdjustIntervalId = null;
+  }
+};
+
+const handleAutoAdjust = () => {
+  if (!isCalibrating.value) {
+    stopAutoAdjust();
+    return;
+  }
+
+  const elapsedSeconds = (Date.now() - calibrationStartTime) / 1000;
+
+  // Wait at least 5 seconds before adjusting so initial detection can settle
+  if (elapsedSeconds < 5) {
+    return;
+  }
+
+  const expectedTicks = getExpectedFrequency() * elapsedSeconds;
+  const actualTicks = calibrationProgress.value;
+
+  // If we're hearing fewer than 30% of expected ticks, lower the threshold
+  if (actualTicks < expectedTicks * 0.3) {
+    const prevThreshold = workingThreshold;
+    workingThreshold = Math.max(MIN_THRESHOLD, workingThreshold * THRESHOLD_ADJUST_FACTOR);
+    workingSensitivity = Math.min(MAX_SENSITIVITY, workingSensitivity * SENSITIVITY_ADJUST_FACTOR);
+
+    if (workingThreshold < prevThreshold) {
+      setCalibration(workingSensitivity, workingThreshold, lowCutoff.value, highCutoff.value);
+      // Update the threshold marker on the audio level display
+      audioThreshold.value = workingThreshold;
+      statusMessage.value = `Adjusting sensitivity — heard ${actualTicks} of ~${Math.round(expectedTicks)} expected ticks`;
+      statusMessageType.value = 'info';
+    }
+  }
+};
+
 const handleStartCalibration = async () => {
   try {
     // Clear any previous status
@@ -255,11 +310,26 @@ const handleStartCalibration = async () => {
     // Start calibration
     startCalibration();
     
+    // Reset working calibration parameters to a sensitive starting point so
+    // that even quiet clock ticks can be detected during calibration.
+    workingThreshold = CALIBRATION_START_THRESHOLD;
+    workingSensitivity = CALIBRATION_START_SENSITIVITY;
+    calibrationStartTime = Date.now();
+    
+    // Apply the sensitive starting parameters to the audio system
+    setCalibration(workingSensitivity, workingThreshold, lowCutoff.value, highCutoff.value);
+    audioThreshold.value = workingThreshold;
+    
     // Start audio processing
     startProcessing();
     
     statusMessage.value = 'Calibration started. Please make sure your clock is ticking near the microphone.';
     statusMessageType.value = 'info';
+    
+    // Start auto-adjustment: periodically check if we are hearing the expected
+    // number of ticks and lower the threshold further when we are not.
+    stopAutoAdjust();
+    autoAdjustIntervalId = window.setInterval(handleAutoAdjust, AUTO_ADJUST_INTERVAL_MS);
     
     // Set timeout for calibration
     timeoutId.value = window.setTimeout(() => {
@@ -283,6 +353,9 @@ const handleStopCalibration = () => {
     timeoutId.value = null;
   }
   
+  // Clear auto-adjust interval
+  stopAutoAdjust();
+  
   // Clear tick flash timeout
   clearTickFlash();
   
@@ -300,6 +373,9 @@ const handleStopCalibration = () => {
 };
 
 const handleCalibrationTimeout = () => {
+  // Stop auto-adjust interval
+  stopAutoAdjust();
+  
   // Stop calibration
   stopProcessing();
   stopCalibration();
@@ -333,6 +409,9 @@ const handleTickDetected = (event: TickEvent) => {
       clearTimeout(timeoutId.value);
       timeoutId.value = null;
     }
+    
+    // Clear auto-adjust interval
+    stopAutoAdjust();
     
     // Complete calibration
     const success = completeCalibration();
@@ -400,6 +479,9 @@ onUnmounted(() => {
   if (timeoutId.value !== null) {
     clearTimeout(timeoutId.value);
   }
+  
+  // Clean up auto-adjust interval
+  stopAutoAdjust();
   
   // Clean up tick flash timeout
   clearTickFlash();
