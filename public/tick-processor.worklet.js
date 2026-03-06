@@ -20,6 +20,8 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
     // Calibration parameters
     this.sensitivity = 1.0;
     this.threshold = 0.08;
+    this.lowCutoff = 500;
+    this.highCutoff = 8000;
     
     // Duplicate detection window (50ms)
     // At 48kHz sample rate, 50ms = 2400 samples
@@ -77,12 +79,20 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
     if (typeof data.threshold === 'number') {
       this.threshold = data.threshold;
     }
+    if (typeof data.lowCutoff === 'number') {
+      this.lowCutoff = data.lowCutoff;
+    }
+    if (typeof data.highCutoff === 'number') {
+      this.highCutoff = data.highCutoff;
+    }
     
     // Acknowledge calibration update
     this.port.postMessage({
       type: 'calibrationSet',
       sensitivity: this.sensitivity,
-      threshold: this.threshold
+      threshold: this.threshold,
+      lowCutoff: this.lowCutoff,
+      highCutoff: this.highCutoff
     });
   }
   
@@ -186,7 +196,9 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
         samplesOffset,
         sampleCount,
         this.threshold,
-        this.sensitivity
+        this.sensitivity,
+        this.lowCutoff,
+        this.highCutoff
       );
       
       // Check if tick was detected

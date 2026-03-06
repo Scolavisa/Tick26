@@ -6,17 +6,18 @@
  */
 
 /**
- * In-place first-order high-pass filter with ~500 Hz cutoff at 48 kHz.
+ * In-place first-order high-pass filter.
+ * cutoff: cutoff frequency in Hz (default 500 Hz); pass 0 to bypass.
  */
 export function applyHighPassFilter(
   samples: Float32Array,
-  sampleCount: number
+  sampleCount: number,
+  cutoff = 500.0
 ): void {
-  if (sampleCount <= 0) {
+  if (sampleCount <= 0 || cutoff <= 0) {
     return;
   }
 
-  const cutoff = 500.0;
   const sampleRate = 48000.0;
   const rc = 1.0 / (2.0 * Math.PI * cutoff);
   const dt = 1.0 / sampleRate;
@@ -32,6 +33,49 @@ export function applyHighPassFilter(
     xPrev = x;
     yPrev = y;
   }
+}
+
+/**
+ * In-place first-order low-pass filter.
+ * cutoff: cutoff frequency in Hz; pass 0 to bypass (no filtering).
+ */
+export function applyLowPassFilter(
+  samples: Float32Array,
+  sampleCount: number,
+  cutoff: number
+): void {
+  if (sampleCount <= 0 || cutoff <= 0) {
+    return;
+  }
+
+  const sampleRate = 48000.0;
+  const rc = 1.0 / (2.0 * Math.PI * cutoff);
+  const dt = 1.0 / sampleRate;
+  const alpha = dt / (rc + dt);
+
+  let yPrev = samples[0]!;
+
+  for (let i = 0; i < sampleCount; i += 1) {
+    const x = samples[i]!;
+    const y = alpha * x + (1.0 - alpha) * yPrev;
+    samples[i] = y;
+    yPrev = y;
+  }
+}
+
+/**
+ * Apply a band-pass filter by chaining a high-pass and a low-pass stage.
+ * lowCutoff: high-pass edge in Hz (0 = no high-pass / bypass)
+ * highCutoff: low-pass edge in Hz (0 = no low-pass / bypass)
+ */
+export function applyBandPassFilter(
+  samples: Float32Array,
+  sampleCount: number,
+  lowCutoff: number,
+  highCutoff: number
+): void {
+  applyHighPassFilter(samples, sampleCount, lowCutoff);
+  applyLowPassFilter(samples, sampleCount, highCutoff);
 }
 
 /**
@@ -59,13 +103,19 @@ export function calculateRMS(
 /**
  * Threshold-based tick identification with sensitivity-based noise filtering.
  *
+ * Applies a band-pass filter defined by lowCutoff (high-pass edge) and
+ * highCutoff (low-pass edge) before computing RMS.  Pass 0 for either
+ * cutoff to skip that filter stage.
+ *
  * Returns true when a potential tick is detected.
  */
 export function detectTick(
   samples: Float32Array,
   sampleCount: number,
   threshold: number,
-  sensitivity: number
+  sensitivity: number,
+  lowCutoff = 500.0,
+  highCutoff = 0.0
 ): boolean {
   if (sampleCount <= 0) {
     return false;
@@ -79,7 +129,7 @@ export function detectTick(
     effectiveSensitivity = 2.0;
   }
 
-  applyHighPassFilter(samples, sampleCount);
+  applyBandPassFilter(samples, sampleCount, lowCutoff, highCutoff);
 
   const rms = calculateRMS(samples, sampleCount);
   const effectiveThreshold = threshold * effectiveSensitivity;

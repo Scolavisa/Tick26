@@ -46,6 +46,8 @@ describe('useCalibration composable', () => {
       expect(calibration.clockSize).toBeDefined();
       expect(calibration.sensitivity).toBeDefined();
       expect(calibration.threshold).toBeDefined();
+      expect(calibration.lowCutoff).toBeDefined();
+      expect(calibration.highCutoff).toBeDefined();
       expect(calibration.isCalibrating).toBeDefined();
       expect(calibration.calibrationProgress).toBeDefined();
       expect(calibration.isCalibrated).toBeDefined();
@@ -69,6 +71,8 @@ describe('useCalibration composable', () => {
       expect(calibration.clockSize.value).toBe('medium');
       expect(calibration.sensitivity.value).toBe(1.0);
       expect(calibration.threshold.value).toBe(0.05);
+      expect(calibration.lowCutoff.value).toBe(500);
+      expect(calibration.highCutoff.value).toBe(8000);
       expect(calibration.isCalibrating.value).toBe(false);
       expect(calibration.calibrationProgress.value).toBe(0);
       expect(calibration.isCalibrated.value).toBe(false);

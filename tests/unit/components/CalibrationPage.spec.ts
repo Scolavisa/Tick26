@@ -18,6 +18,8 @@ const mockHasEnoughSamples = ref(false);
 const mockIsCalibrated = ref(false);
 const mockSensitivity = ref(1.0);
 const mockThreshold = ref(0.05);
+const mockLowCutoff = ref(500);
+const mockHighCutoff = ref(8000);
 
 const mockIsInitialized = ref(true);
 const mockPermissionGranted = ref(true);
@@ -44,6 +46,8 @@ vi.mock('../../../src/composables/useCalibration', () => ({
     isCalibrated: mockIsCalibrated,
     sensitivity: mockSensitivity,
     threshold: mockThreshold,
+    lowCutoff: mockLowCutoff,
+    highCutoff: mockHighCutoff,
     setClockSize: mockSetClockSize,
     startCalibration: mockStartCalibration,
     stopCalibration: mockStopCalibration,

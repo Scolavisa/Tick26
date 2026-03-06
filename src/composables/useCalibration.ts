@@ -24,6 +24,8 @@ let isSharedStateInitialized = false;
 const clockSize: Ref<ClockSize> = ref('medium');
 const sensitivity: Ref<number> = ref(1.0);
 const threshold: Ref<number> = ref(0.05);
+const lowCutoff: Ref<number> = ref(500);
+const highCutoff: Ref<number> = ref(8000);
 const isCalibrating: Ref<boolean> = ref(false);
 const calibrationProgress: Ref<number> = ref(0);
 const currentError: Ref<ErrorInfo | null> = ref(null);
@@ -60,6 +62,12 @@ function loadCalibrationFromStorage(): void {
       }
       if (typeof settings.threshold === 'number') {
         threshold.value = settings.threshold;
+      }
+      if (typeof settings.lowCutoff === 'number') {
+        lowCutoff.value = settings.lowCutoff;
+      }
+      if (typeof settings.highCutoff === 'number') {
+        highCutoff.value = settings.highCutoff;
       }
     }
   } catch (error) {
@@ -233,6 +241,8 @@ export function useCalibration() {
       clockSize: clockSize.value,
       sensitivity: sensitivity.value,
       threshold: threshold.value,
+      lowCutoff: lowCutoff.value,
+      highCutoff: highCutoff.value,
       expectedFrequency: getExpectedFrequency(),
       calibratedAt: Date.now()
     };
@@ -265,6 +275,8 @@ export function useCalibration() {
     clockSize.value = 'medium';
     sensitivity.value = 1.0;
     threshold.value = 0.05;
+    lowCutoff.value = 500;
+    highCutoff.value = 8000;
     isCalibrating.value = false;
     calibrationProgress.value = 0;
     tickSamples = [];
@@ -325,6 +337,8 @@ export function useCalibration() {
     clockSize,
     sensitivity,
     threshold,
+    lowCutoff,
+    highCutoff,
     isCalibrating,
     calibrationProgress,
     isCalibrated,

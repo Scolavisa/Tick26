@@ -45,6 +45,8 @@ class TickProcessorWorkletTest extends MockAudioWorkletProcessor {
   private wasmExports: any = null;
   private sensitivity = 1.0;
   private threshold = 0.08;
+  private lowCutoff = 500;
+  private highCutoff = 8000;
   private lastTickTime = -Infinity;
   private duplicateWindowSamples = 2400;
   private currentSampleTime = 0;
@@ -73,11 +75,19 @@ class TickProcessorWorkletTest extends MockAudioWorkletProcessor {
     if (typeof data.threshold === 'number') {
       this.threshold = data.threshold;
     }
+    if (typeof data.lowCutoff === 'number') {
+      this.lowCutoff = data.lowCutoff;
+    }
+    if (typeof data.highCutoff === 'number') {
+      this.highCutoff = data.highCutoff;
+    }
 
     this.port.postMessage({
       type: 'calibrationSet',
       sensitivity: this.sensitivity,
-      threshold: this.threshold
+      threshold: this.threshold,
+      lowCutoff: this.lowCutoff,
+      highCutoff: this.highCutoff
     });
   }
 
@@ -153,6 +163,8 @@ class TickProcessorWorkletTest extends MockAudioWorkletProcessor {
     return {
       sensitivity: this.sensitivity,
       threshold: this.threshold,
+      lowCutoff: this.lowCutoff,
+      highCutoff: this.highCutoff,
       lastTickTime: this.lastTickTime,
       currentSampleTime: this.currentSampleTime,
       duplicateWindowSamples: this.duplicateWindowSamples,
@@ -209,13 +221,17 @@ describe('TickProcessorWorklet', () => {
       processor.handleMessage({
         type: 'setCalibration',
         sensitivity: 1.5,
-        threshold: 0.1
+        threshold: 0.1,
+        lowCutoff: 200,
+        highCutoff: 4000
       });
 
       expect(processor.port.postMessage).toHaveBeenCalledWith({
         type: 'calibrationSet',
         sensitivity: 1.5,
-        threshold: 0.1
+        threshold: 0.1,
+        lowCutoff: 200,
+        highCutoff: 4000
       });
     });
 

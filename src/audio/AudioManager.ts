@@ -145,12 +145,14 @@ export class AudioManager {
 
   /**
    * Set calibration parameters for tick detection
-   * Sends sensitivity and threshold values to the AudioWorklet processor
+   * Sends sensitivity, threshold and band-pass filter values to the AudioWorklet processor
    * 
    * @param sensitivity - Sensitivity multiplier (0.1 - 2.0)
    * @param threshold - RMS amplitude threshold (0.01 - 0.5)
+   * @param lowCutoff - High-pass edge in Hz (0 = bypass)
+   * @param highCutoff - Low-pass edge in Hz (0 = bypass)
    */
-  setCalibration(sensitivity: number, threshold: number): void {
+  setCalibration(sensitivity: number, threshold: number, lowCutoff: number, highCutoff: number): void {
     if (!this.workletNode) {
       console.warn('AudioManager: Cannot set calibration, worklet not loaded');
       return;
@@ -160,7 +162,9 @@ export class AudioManager {
     this.workletNode.port.postMessage({
       type: 'setCalibration',
       sensitivity,
-      threshold
+      threshold,
+      lowCutoff,
+      highCutoff
     });
   }
 
@@ -289,7 +293,9 @@ export class AudioManager {
       case 'calibrationSet':
         console.log('AudioManager: Calibration updated', {
           sensitivity: data.sensitivity,
-          threshold: data.threshold
+          threshold: data.threshold,
+          lowCutoff: data.lowCutoff,
+          highCutoff: data.highCutoff
         });
         break;
 
