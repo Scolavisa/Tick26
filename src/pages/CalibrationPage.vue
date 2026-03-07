@@ -338,7 +338,8 @@ const handleAutoAdjust = () => {
   // Auto-boost: if the background level is extremely low (typical phone with quiet mic)
   // and no ticks have been detected yet, double the input gain up to MAX_AUTO_BOOST.
   // This runs before the threshold adjustment so the worklet receives a stronger signal.
-  if (smoothedBackgroundLevel < VERY_LOW_MIC_LEVEL && actualTicks === 0 && inputBoost.value < MAX_AUTO_BOOST) {
+  const signalTooLowToDetect = smoothedBackgroundLevel < VERY_LOW_MIC_LEVEL && actualTicks === 0;
+  if (signalTooLowToDetect && inputBoost.value < MAX_AUTO_BOOST) {
     const newBoost = Math.min(MAX_AUTO_BOOST, inputBoost.value * AUTO_BOOST_FACTOR);
     inputBoost.value = newBoost;
     setInputGain(newBoost);

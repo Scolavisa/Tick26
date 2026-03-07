@@ -67,7 +67,7 @@ export class AudioManager {
         stream = await navigator.mediaDevices.getUserMedia({ audio: enhancedAudio, video: false });
       } catch {
         // Fall back to simpler constraints when enhanced ones are not supported
-        console.warn('AudioManager: Enhanced mic constraints rejected — falling back to default constraints');
+        console.warn('AudioManager: Enhanced mic constraints rejected - falling back to default constraints');
         const fallbackConstraints: MediaStreamConstraints = {
           audio: deviceId ? { deviceId: { exact: deviceId } } : true,
           video: false
