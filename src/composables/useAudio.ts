@@ -369,6 +369,18 @@ export function useAudio() {
   };
 
   /**
+   * Set the digital input gain applied before the AudioWorklet.
+   * Use this to compensate for low microphone levels on phones.
+   * A value of 1.0 means no amplification (desktop default behaviour is unchanged).
+   * 
+   * @param gain - Gain multiplier (0–32). 1.0 = unity gain.
+   */
+  const setInputGain = (gain: number): void => {
+    const manager = getAudioManager();
+    manager.setInputGain(gain);
+  };
+
+  /**
    * Get the current audio system state
    * Useful for debugging and status checks
    */
@@ -412,6 +424,7 @@ export function useAudio() {
     onTickDetected,
     onVolumeLevel,
     setCalibration,
+    setInputGain,
     getState,
     clearError
   };

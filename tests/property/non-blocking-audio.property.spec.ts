@@ -39,6 +39,12 @@ class MockAudioContext {
     disconnect: vi.fn()
   });
 
+  createGain = vi.fn().mockReturnValue({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    gain: { value: 1.0 }
+  });
+
   resume = vi.fn().mockResolvedValue(undefined);
   close = vi.fn().mockResolvedValue(undefined);
 }

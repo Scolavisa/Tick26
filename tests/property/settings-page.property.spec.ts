@@ -23,6 +23,12 @@ class MockAudioContext {
     disconnect: vi.fn()
   });
 
+  createGain = vi.fn().mockReturnValue({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    gain: { value: 1.0 }
+  });
+
   resume = vi.fn().mockResolvedValue(undefined);
   close = vi.fn().mockResolvedValue(undefined);
 }
@@ -153,11 +159,13 @@ describe('SettingsPage properties', () => {
           expect(isInitialized.value).toBe(true);
 
           // Property: getUserMedia should have been called again with the specific device
-          // to activate the audio input source
-          expect(mockGetUserMedia).toHaveBeenCalledWith({
-            audio: { deviceId: { exact: deviceId } },
-            video: false
-          });
+          // to activate the audio input source (enhanced constraints are tried first)
+          expect(mockGetUserMedia).toHaveBeenCalledWith(
+            expect.objectContaining({
+              audio: expect.objectContaining({ deviceId: { exact: deviceId } }),
+              video: false
+            })
+          );
 
           // Property: The system should have created an audio context
           // (verified by the fact that isInitialized is true, which requires

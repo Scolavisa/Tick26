@@ -7,18 +7,25 @@
  * - Microphone access and MediaStream management
  * - AudioWorklet processor loading and lifecycle
  * - WASM module loading and instantiation
- * - Audio graph connection: MediaStream → AudioWorklet
+ * - Audio graph connection: MediaStream → GainNode → AudioWorklet
+ * - Input gain control (digital pre-amp) to compensate for low-level phone mics
  * - Tick detection event forwarding to application layer
  * - Resource cleanup and disposal
  */
 
 import type { TickEvent } from '../types';
 
+// Safe limits for the digital input gain stage
+const MIN_INPUT_GAIN = 0.0;
+const MAX_INPUT_GAIN = 32.0;
+
 export class AudioManager {
   private audioContext: AudioContext | null = null;
   private workletNode: AudioWorkletNode | null = null;
   private mediaStream: MediaStream | null = null;
   private sourceNode: MediaStreamAudioSourceNode | null = null;
+  /** Digital pre-amp inserted between the mic source and the AudioWorklet. */
+  private gainNode: GainNode | null = null;
   private wasmModule: WebAssembly.Module | null = null;
   private tickCallback: ((event: TickEvent) => void) | null = null;
   private volumeCallback: ((level: number, threshold: number) => void) | null = null;
@@ -43,18 +50,40 @@ export class AudioManager {
         await this.audioContext.resume();
       }
 
-      // Request microphone access
-      const constraints: MediaStreamConstraints = {
-        audio: deviceId
-          ? { deviceId: { exact: deviceId } }
-          : true,
-        video: false
-      };
-
-      this.mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      // Request microphone access.
+      // Best-effort: try to disable browser voice-processing features (AGC, noise
+      // suppression, echo cancellation) to get a raw signal — this is especially
+      // important on phones where these processing stages can drastically reduce the
+      // apparent microphone level delivered to the app.
+      // If the browser rejects the enhanced constraints (some do), fall back to simpler ones.
+      let stream: MediaStream | null = null;
+      try {
+        const enhancedAudio: MediaTrackConstraints = {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          ...(deviceId ? { deviceId: { exact: deviceId } } : {})
+        };
+        stream = await navigator.mediaDevices.getUserMedia({ audio: enhancedAudio, video: false });
+      } catch {
+        // Fall back to simpler constraints when enhanced ones are not supported
+        console.warn('AudioManager: Enhanced mic constraints rejected — falling back to default constraints');
+        const fallbackConstraints: MediaStreamConstraints = {
+          audio: deviceId ? { deviceId: { exact: deviceId } } : true,
+          video: false
+        };
+        stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+      }
+      this.mediaStream = stream;
 
       // Create MediaStreamAudioSourceNode from the microphone stream
       this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
+
+      // Create a gain node (digital pre-amp) so the app can compensate for
+      // low-level microphone signals, especially on phones.
+      // Default gain of 1.0 means no amplification — desktop behaviour is unchanged.
+      this.gainNode = this.audioContext.createGain();
+      this.gainNode.gain.value = 1.0;
 
     } catch (error) {
       // Clean up on error
@@ -170,7 +199,7 @@ export class AudioManager {
 
   /**
    * Start audio processing
-   * Connects the audio graph: MediaStream → AudioWorklet → Destination
+   * Connects the audio graph: MediaStream → GainNode → AudioWorklet
    * 
    * @throws Error if audio system is not fully initialized
    */
@@ -191,8 +220,9 @@ export class AudioManager {
       return;
     }
 
-    // Connect the audio graph
-    this.sourceNode.connect(this.workletNode);
+    // Connect the audio graph: source → gain → worklet
+    this.sourceNode.connect(this.gainNode!);
+    this.gainNode!.connect(this.workletNode);
 
     this.isProcessing = true;
     console.log('AudioManager: Audio processing started');
@@ -207,12 +237,35 @@ export class AudioManager {
       return;
     }
 
-    // Disconnect the audio graph
-    if (this.sourceNode && this.workletNode) {
-      this.sourceNode.disconnect(this.workletNode);
+    // Disconnect only the source→gain edge so the gain→worklet
+    // wiring can be reused when start() is called again.
+    if (this.sourceNode && this.gainNode) {
+      this.sourceNode.disconnect(this.gainNode);
     }
 
     this.isProcessing = false;
+  }
+
+  /**
+   * Set the digital input gain applied before the AudioWorklet.
+   * Use this to compensate for low microphone levels on phones.
+   * 
+   * @param value - Gain multiplier. 1.0 = unity (no change). Safe range: 0–32.
+   */
+  setInputGain(value: number): void {
+    // Clamp to safe range to avoid clipping or silent output
+    const clamped = Math.max(MIN_INPUT_GAIN, Math.min(MAX_INPUT_GAIN, value));
+    if (this.gainNode) {
+      this.gainNode.gain.value = clamped;
+    }
+  }
+
+  /**
+   * Get the current digital input gain value.
+   * Returns 1.0 (unity gain) when the gain node has not been created yet.
+   */
+  getInputGain(): number {
+    return this.gainNode?.gain.value ?? 1.0;
   }
 
   /**
@@ -248,6 +301,12 @@ export class AudioManager {
       this.workletNode.port.onmessage = null;
       this.workletNode.disconnect();
       this.workletNode = null;
+    }
+
+    // Disconnect and clean up gain node
+    if (this.gainNode) {
+      this.gainNode.disconnect();
+      this.gainNode = null;
     }
 
     // Disconnect and clean up source node
@@ -339,12 +398,14 @@ export class AudioManager {
     processing: boolean;
     contextState: AudioContextState | null;
     sampleRate: number | null;
+    inputGain: number;
   } {
     return {
       initialized: this.audioContext !== null,
       processing: this.isProcessing,
       contextState: this.audioContext?.state || null,
-      sampleRate: this.audioContext?.sampleRate || null
+      sampleRate: this.audioContext?.sampleRate || null,
+      inputGain: this.getInputGain()
     };
   }
 }

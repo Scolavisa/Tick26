@@ -61,6 +61,32 @@
       </div>
     </section>
 
+    <!-- Input Boost Control -->
+    <section class="input-boost-section">
+      <h2>Input Boost</h2>
+      <p class="input-boost-description">
+        Amplify the microphone signal digitally. Increase this if the audio level bar shows
+        almost no movement during calibration (common on phones with quiet built-in microphones).
+        A value of 1× means no amplification.
+      </p>
+      <div class="input-boost-control">
+        <label for="input-boost">Input Boost</label>
+        <select
+          id="input-boost"
+          v-model.number="inputBoost"
+          @change="handleInputBoostChange"
+          class="filter-select"
+        >
+          <option :value="1">1× (no boost)</option>
+          <option :value="2">2×</option>
+          <option :value="4">4×</option>
+          <option :value="8">8×</option>
+          <option :value="16">16×</option>
+          <option :value="32">32×</option>
+        </select>
+      </div>
+    </section>
+
     <!-- Calibration Controls -->
     <section class="calibration-controls">
       <button
@@ -180,6 +206,7 @@ const {
   onTickDetected,
   onVolumeLevel,
   setCalibration,
+  setInputGain,
   initializeWorklet,
   startProcessing,
   stopProcessing
@@ -193,6 +220,9 @@ const audioLevel = ref<number>(0);
 const audioThreshold = ref<number>(0.08);
 const tickFlash = ref<boolean>(false);
 let tickFlashTimeoutId: number | null = null;
+
+// Input boost (digital pre-amp gain)
+const inputBoost = ref<number>(1);
 
 // Auto-calibration state
 let workingThreshold = 0.005;
@@ -219,6 +249,10 @@ const MAX_SENSITIVITY = 2.0;              // Maximum allowed sensitivity
 const THRESHOLD_ADJUST_FACTOR = 0.65;     // Reduce threshold by 35% per step (or raise by ÷0.65 ≈ 54%)
 const SENSITIVITY_ADJUST_FACTOR = 1.3;    // Increase sensitivity by 30% per step
 const TOO_MANY_TICKS_RATIO = 3.0;         // Raise threshold when actual ticks exceed 3× expected
+
+// Auto-boost constants
+const MAX_AUTO_BOOST = 16;                 // Never auto-boost beyond 16× to avoid runaway
+const AUTO_BOOST_FACTOR = 2;              // Double the gain each step
 
 // Microphone diagnostic thresholds (raw RMS amplitude)
 const VERY_LOW_MIC_LEVEL = 0.0005;  // System-level gain too low (typical on phones with quiet mics)
@@ -263,6 +297,10 @@ const selectClockSize = (size: ClockSize) => {
   statusMessageType.value = 'info';
 };
 
+const handleInputBoostChange = () => {
+  setInputGain(inputBoost.value);
+};
+
 const clearTickFlash = () => {
   if (tickFlashTimeoutId !== null) {
     clearTimeout(tickFlashTimeoutId);
@@ -296,6 +334,18 @@ const handleAutoAdjust = () => {
 
   // Update microphone diagnostic hint based on measured background level
   updateMicDiagnosticHint(actualTicks, expectedTicks);
+
+  // Auto-boost: if the background level is extremely low (typical phone with quiet mic)
+  // and no ticks have been detected yet, double the input gain up to MAX_AUTO_BOOST.
+  // This runs before the threshold adjustment so the worklet receives a stronger signal.
+  if (smoothedBackgroundLevel < VERY_LOW_MIC_LEVEL && actualTicks === 0 && inputBoost.value < MAX_AUTO_BOOST) {
+    const newBoost = Math.min(MAX_AUTO_BOOST, inputBoost.value * AUTO_BOOST_FACTOR);
+    inputBoost.value = newBoost;
+    setInputGain(newBoost);
+    statusMessage.value = `Mic signal very low — boosting input gain to ${newBoost}×`;
+    statusMessageType.value = 'info';
+    return;
+  }
 
   // Too-loud case: far more ticks than expected → raise threshold to reduce false positives
   if (actualTicks > expectedTicks * TOO_MANY_TICKS_RATIO && actualTicks > 3) {
@@ -363,6 +413,9 @@ const handleStartCalibration = async () => {
     
     // Start calibration
     startCalibration();
+    
+    // Reset input gain to the user-selected (or default) boost level
+    setInputGain(inputBoost.value);
     
     // Reset working calibration parameters to a sensitive starting point so
     // that even quiet clock ticks can be detected during calibration.
@@ -592,6 +645,32 @@ section {
   background: var(--color-bg-tertiary);
   padding: var(--spacing-lg);
   border-radius: var(--border-radius-lg);
+}
+
+/* Input Boost Section */
+.input-boost-section {
+  background: var(--color-bg-tertiary);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+}
+
+.input-boost-description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
+  line-height: var(--line-height-normal);
+}
+
+.input-boost-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs, 4px);
+}
+
+.input-boost-control label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
 }
 
 .filter-description {

@@ -19,6 +19,12 @@ class MockAudioContext {
     disconnect: vi.fn()
   });
 
+  createGain = vi.fn().mockReturnValue({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    gain: { value: 1.0 }
+  });
+
   resume = vi.fn().mockResolvedValue(undefined);
   close = vi.fn().mockResolvedValue(undefined);
 }
@@ -100,10 +106,17 @@ describe('AudioManager', () => {
     it('requests microphone access without device ID', async () => {
       await audioManager.initialize();
 
-      expect(mockGetUserMedia).toHaveBeenCalledWith({
-        audio: true,
-        video: false
-      });
+      // First call should use enhanced constraints (no voice processing)
+      expect(mockGetUserMedia).toHaveBeenCalledWith(
+        expect.objectContaining({
+          audio: expect.objectContaining({
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }),
+          video: false
+        })
+      );
     });
 
     it('requests specific microphone device when deviceId provided', async () => {
@@ -111,8 +124,46 @@ describe('AudioManager', () => {
 
       await audioManager.initialize(deviceId);
 
-      expect(mockGetUserMedia).toHaveBeenCalledWith({
+      expect(mockGetUserMedia).toHaveBeenCalledWith(
+        expect.objectContaining({
+          audio: expect.objectContaining({
+            deviceId: { exact: deviceId },
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }),
+          video: false
+        })
+      );
+    });
+
+    it('falls back to simple constraints when enhanced constraints fail', async () => {
+      const deviceId = 'test-device-456';
+      // First call (enhanced) rejects, second call (fallback) succeeds
+      mockGetUserMedia
+        .mockRejectedValueOnce(new Error('OverconstrainedError'))
+        .mockResolvedValueOnce(new MockMediaStream());
+
+      await audioManager.initialize(deviceId);
+
+      expect(mockGetUserMedia).toHaveBeenCalledTimes(2);
+      // Second call is the fallback
+      expect(mockGetUserMedia).toHaveBeenNthCalledWith(2, {
         audio: { deviceId: { exact: deviceId } },
+        video: false
+      });
+    });
+
+    it('falls back to simple constraints (no device) when enhanced constraints fail', async () => {
+      mockGetUserMedia
+        .mockRejectedValueOnce(new Error('OverconstrainedError'))
+        .mockResolvedValueOnce(new MockMediaStream());
+
+      await audioManager.initialize();
+
+      expect(mockGetUserMedia).toHaveBeenCalledTimes(2);
+      expect(mockGetUserMedia).toHaveBeenNthCalledWith(2, {
+        audio: true,
         video: false
       });
     });
@@ -311,6 +362,50 @@ describe('AudioManager', () => {
     });
   });
 
+  describe('Input gain control', () => {
+    beforeEach(async () => {
+      await audioManager.initialize();
+    });
+
+    it('defaults to unity gain (1.0)', () => {
+      expect(audioManager.getInputGain()).toBe(1.0);
+    });
+
+    it('sets input gain on gain node', () => {
+      audioManager.setInputGain(4.0);
+
+      const gainNode = (audioManager as any).gainNode;
+      expect(gainNode.gain.value).toBe(4.0);
+      expect(audioManager.getInputGain()).toBe(4.0);
+    });
+
+    it('clamps gain to safe maximum', () => {
+      audioManager.setInputGain(100.0);
+
+      const gainNode = (audioManager as any).gainNode;
+      expect(gainNode.gain.value).toBe(32.0);
+    });
+
+    it('clamps gain to safe minimum (0)', () => {
+      audioManager.setInputGain(-5.0);
+
+      const gainNode = (audioManager as any).gainNode;
+      expect(gainNode.gain.value).toBe(0.0);
+    });
+
+    it('returns 1.0 from getInputGain when not initialized', () => {
+      const uninitializedManager = new AudioManager();
+      expect(uninitializedManager.getInputGain()).toBe(1.0);
+    });
+
+    it('includes inputGain in getState()', () => {
+      audioManager.setInputGain(8.0);
+
+      const state = audioManager.getState();
+      expect(state.inputGain).toBe(8.0);
+    });
+  });
+
   describe('Audio processing', () => {
     beforeEach(async () => {
       await audioManager.initialize();
@@ -321,9 +416,11 @@ describe('AudioManager', () => {
       audioManager.start();
 
       const sourceNode = (audioManager as any).sourceNode;
+      const gainNode = (audioManager as any).gainNode;
       const workletNode = (audioManager as any).workletNode;
 
-      expect(sourceNode.connect).toHaveBeenCalledWith(workletNode);
+      expect(sourceNode.connect).toHaveBeenCalledWith(gainNode);
+      expect(gainNode.connect).toHaveBeenCalledWith(workletNode);
     });
 
     it('sets processing state to true on start', () => {
@@ -365,11 +462,11 @@ describe('AudioManager', () => {
       audioManager.start();
 
       const sourceNode = (audioManager as any).sourceNode;
-      const workletNode = (audioManager as any).workletNode;
+      const gainNode = (audioManager as any).gainNode;
 
       audioManager.stop();
 
-      expect(sourceNode.disconnect).toHaveBeenCalledWith(workletNode);
+      expect(sourceNode.disconnect).toHaveBeenCalledWith(gainNode);
     });
 
     it('sets processing state to false on stop', () => {
@@ -533,6 +630,15 @@ describe('AudioManager', () => {
       audioManager.cleanup();
 
       expect(workletNode.disconnect).toHaveBeenCalled();
+    });
+
+    it('disconnects gain node', () => {
+      const gainNode = (audioManager as any).gainNode;
+
+      audioManager.cleanup();
+
+      expect(gainNode.disconnect).toHaveBeenCalled();
+      expect((audioManager as any).gainNode).toBeNull();
     });
 
     it('disconnects source node', () => {

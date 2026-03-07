@@ -18,6 +18,12 @@ class MockAudioContext {
     disconnect: vi.fn()
   });
 
+  createGain = vi.fn().mockReturnValue({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    gain: { value: 1.0 }
+  });
+
   resume = vi.fn().mockResolvedValue(undefined);
   close = vi.fn().mockResolvedValue(undefined);
 }
@@ -277,10 +283,18 @@ describe('useAudio composable', () => {
 
       await audio.selectDevice('device-1');
 
-      expect(mockGetUserMedia).toHaveBeenCalledWith({
-        audio: { deviceId: { exact: 'device-1' } },
-        video: false
-      });
+      // Should attempt enhanced constraints (with voice processing disabled) first
+      expect(mockGetUserMedia).toHaveBeenCalledWith(
+        expect.objectContaining({
+          audio: expect.objectContaining({
+            deviceId: { exact: 'device-1' },
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }),
+          video: false
+        })
+      );
       expect(audio.selectedDevice.value).toBe('device-1');
       expect(audio.isInitialized.value).toBe(true);
     });
@@ -457,6 +471,16 @@ describe('useAudio composable', () => {
 
       // Should not throw
       expect(() => audio.setCalibration(1.5, 0.1, 500, 8000)).not.toThrow();
+    });
+
+    it('exposes setInputGain method', async () => {
+      const audio = useAudio();
+
+      await audio.selectDevice('device-1');
+
+      // Should not throw and should be a function
+      expect(typeof audio.setInputGain).toBe('function');
+      expect(() => audio.setInputGain(4.0)).not.toThrow();
     });
   });
 

@@ -72,6 +72,7 @@ vi.mock('../../src/composables/useAudio', () => ({
     onTickDetected: mockOnTickDetected,
     onVolumeLevel: vi.fn(),
     setCalibration: mockSetCalibration,
+    setInputGain: vi.fn(),
     initializeWorklet: mockInitializeWorklet,
     startProcessing: mockStartProcessing,
     stopProcessing: mockStopProcessing
