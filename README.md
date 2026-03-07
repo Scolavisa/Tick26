@@ -23,7 +23,34 @@ Tick Tack Timer is a PWA that listens to mechanical clock ticks using your devic
 - 🎨 **Responsive design** (320px-768px)
 - ⚡ **High-performance** WASM-based audio processing
 
-## Technology Stack
+## Microphone Input Boost (Phone Compatibility)
+
+Mobile phones often deliver a much quieter microphone signal to web applications than desktop
+computers do.  The main reasons are:
+
+- The browser may limit microphone gain to protect call quality.
+- Built-in AGC / noise suppression / echo cancellation (applied by the OS or browser) can
+  significantly reduce the raw signal level visible to the Web Audio API.
+
+Tick Tack Timer addresses this in two ways:
+
+1. **Voice-processing constraints** – when requesting microphone access, the app asks the
+   browser to disable `echoCancellation`, `noiseSuppression`, and `autoGainControl`.
+   This is a *best-effort* hint: some browsers or operating systems may ignore it.
+
+2. **Digital Input Boost** – a `GainNode` is inserted in the audio pipeline between the
+   microphone source and the AudioWorklet processor (the graph is now
+   `Microphone → GainNode → AudioWorklet`).  By default the gain is **1× (unity)** so
+   desktop behaviour is completely unchanged.  On the Calibration page you can manually
+   raise the boost (2×, 4×, 8×, 16×, 32×), and the auto-calibration logic will
+   automatically double the gain (up to 16×) each time it detects an extremely low signal
+   level with no ticks detected.
+
+> **Note:** very high gain values amplify background noise as well as the clock signal.
+> If the calibration succeeds at a high boost level, consider moving the microphone closer
+> to the clock for a cleaner signal.
+
+
 
 - **Frontend:** Vue 3 with Composition API
 - **Language:** TypeScript (strict mode)
@@ -144,18 +171,19 @@ tick-tack-timer/
 ### Audio Processing Pipeline
 
 ```
-Microphone → AudioContext → AudioWorklet → WASM Detector → Counter → UI
+Microphone → AudioContext → GainNode → AudioWorklet → WASM Detector → Counter → UI
 ```
 
-1. **Microphone Input:** Captures audio via getUserMedia API
-2. **AudioWorklet:** Processes audio in dedicated thread (non-blocking)
-3. **WASM Module:** High-performance tick detection algorithm
-4. **Counter:** Maintains tick count and session state
-5. **UI:** Real-time display with visual feedback
+1. **Microphone Input:** Captures audio via getUserMedia API (with best-effort voice-processing constraints disabled)
+2. **GainNode:** Digital pre-amp to compensate for low-level phone microphone signals (default 1× — no effect on desktop)
+3. **AudioWorklet:** Processes audio in dedicated thread (non-blocking)
+4. **WASM Module:** High-performance tick detection algorithm
+5. **Counter:** Maintains tick count and session state
+6. **UI:** Real-time display with visual feedback
 
 ### Key Components
 
-- **AudioManager:** Coordinates audio system initialization and communication
+- **AudioManager:** Coordinates audio system initialization and communication; manages the GainNode digital pre-amp
 - **TickProcessorWorklet:** Real-time audio processing in AudioWorklet thread
 - **Tick Detector (WASM):** High-performance RMS calculation and threshold detection
 - **Composables:** Reactive state management for audio, calibration, counting, and sessions

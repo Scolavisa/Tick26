@@ -22,6 +22,12 @@ class MockAudioContext {
     disconnect: vi.fn()
   });
 
+  createGain = vi.fn().mockReturnValue({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    gain: { value: 1.0 }
+  });
+
   resume = vi.fn().mockResolvedValue(undefined);
   close = vi.fn().mockResolvedValue(undefined);
 }
@@ -139,11 +145,14 @@ describe('useAudio properties', () => {
           expect(isInitialized.value).toBe(true);
 
           // Property: getUserMedia should have been called with the specific device
+          // AudioManager first tries enhanced constraints (voice processing disabled)
           // Note: AudioManager adds video: false to the constraints
-          expect(mockGetUserMedia).toHaveBeenCalledWith({
-            audio: { deviceId: { exact: deviceId } },
-            video: false
-          });
+          expect(mockGetUserMedia).toHaveBeenCalledWith(
+            expect.objectContaining({
+              audio: expect.objectContaining({ deviceId: { exact: deviceId } }),
+              video: false
+            })
+          );
 
           // Cleanup for next iteration
           cleanup();

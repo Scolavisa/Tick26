@@ -20,6 +20,12 @@ class MockAudioContext {
     disconnect: vi.fn()
   });
 
+  createGain = vi.fn().mockReturnValue({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    gain: { value: 1.0 }
+  });
+
   resume = vi.fn().mockResolvedValue(undefined);
   close = vi.fn().mockResolvedValue(undefined);
 }
@@ -121,12 +127,15 @@ describe('AudioManager properties', () => {
 
           // Verify the audio graph is connected
           const sourceNode = (audioManager as any).sourceNode;
+          const gainNode = (audioManager as any).gainNode;
           const workletNode = (audioManager as any).workletNode;
 
-          // Property: The source node should be connected to the worklet node
+          // Property: The source node should be connected to the gain node, and gain to worklet
           expect(sourceNode).not.toBeNull();
+          expect(gainNode).not.toBeNull();
           expect(workletNode).not.toBeNull();
-          expect(sourceNode.connect).toHaveBeenCalledWith(workletNode);
+          expect(sourceNode.connect).toHaveBeenCalledWith(gainNode);
+          expect(gainNode.connect).toHaveBeenCalledWith(workletNode);
 
           // Property: The WASM module should have been sent to the worklet
           expect(workletNode.port.postMessage).toHaveBeenCalledWith(
@@ -214,6 +223,7 @@ describe('AudioManager properties', () => {
           audioManager.start();
 
           const sourceNode = (audioManager as any).sourceNode;
+          const gainNode = (audioManager as any).gainNode;
           const workletNode = (audioManager as any).workletNode;
 
           // Clear the initial connect call
@@ -232,9 +242,11 @@ describe('AudioManager properties', () => {
           // Stop processing
           audioManager.stop();
 
-          // Property: Disconnect should be called exactly once
+          // Property: Disconnect should be called exactly once (source from gain)
           expect(sourceNode.disconnect).toHaveBeenCalledTimes(1);
-          expect(sourceNode.disconnect).toHaveBeenCalledWith(workletNode);
+          expect(sourceNode.disconnect).toHaveBeenCalledWith(gainNode);
+          // gainNode→worklet connection is preserved (not disconnected on stop)
+          expect(gainNode.disconnect).not.toHaveBeenCalled();
 
           // Cleanup
           audioManager.cleanup();
