@@ -94,7 +94,7 @@
           <div class="meter-bar-track">
             <div
               class="meter-bar-fill"
-              :class="{ 'tick-flash': tickFlash }"
+              :class="{ 'tick-flash': tickFlash, 'level-loud': audioLevel > HIGH_MIC_LEVEL }"
               :style="{ width: audioLevelPercent + '%' }"
             ></div>
             <div
@@ -108,6 +108,11 @@
             <span class="threshold-label">▲ Threshold</span>
             <span>Loud</span>
           </div>
+        </div>
+
+        <!-- Microphone diagnostic hint -->
+        <div v-if="micDiagnosticHint" class="mic-diagnostic-hint">
+          {{ micDiagnosticHint }}
         </div>
 
         <div class="tick-count" :class="{ 'tick-flash': tickFlash }">
@@ -194,6 +199,10 @@ let workingThreshold = 0.005;
 let workingSensitivity = 1.5;
 let autoAdjustIntervalId: number | null = null;
 let calibrationStartTime = 0;
+let smoothedBackgroundLevel = 0;
+
+// Local state for mic diagnostics
+const micDiagnosticHint = ref<string>('');
 
 // Constants
 const minTicksRequired = 10;
@@ -204,9 +213,17 @@ const CALIBRATION_START_THRESHOLD = 0.005;  // Start sensitive to catch quiet ti
 const CALIBRATION_START_SENSITIVITY = 1.5;  // Start with elevated sensitivity
 const AUTO_ADJUST_INTERVAL_MS = 5000;       // Check every 5 seconds
 const MIN_THRESHOLD = 0.001;               // Minimum allowed threshold
+const MAX_THRESHOLD = 0.5;                 // Maximum allowed threshold (for too-loud case)
+const MIN_SENSITIVITY = 0.1;              // Minimum allowed sensitivity (for too-loud case)
 const MAX_SENSITIVITY = 2.0;              // Maximum allowed sensitivity
-const THRESHOLD_ADJUST_FACTOR = 0.65;     // Reduce threshold by 35% per step
+const THRESHOLD_ADJUST_FACTOR = 0.65;     // Reduce threshold by 35% per step (or raise by ÷0.65 ≈ 54%)
 const SENSITIVITY_ADJUST_FACTOR = 1.3;    // Increase sensitivity by 30% per step
+const TOO_MANY_TICKS_RATIO = 3.0;         // Raise threshold when actual ticks exceed 3× expected
+
+// Microphone diagnostic thresholds (raw RMS amplitude)
+const VERY_LOW_MIC_LEVEL = 0.0005;  // System-level gain too low (typical on phones with quiet mics)
+const LOW_MIC_LEVEL = 0.002;        // Mic OK but clock signal is too weak (too far away)
+const HIGH_MIC_LEVEL = 0.4;         // Signal too loud (risk of clipping / false positives)
 
 // Clock size options
 const clockSizes = [
@@ -277,7 +294,25 @@ const handleAutoAdjust = () => {
   const expectedTicks = getExpectedFrequency() * elapsedSeconds;
   const actualTicks = calibrationProgress.value;
 
-  // If we're hearing fewer than 30% of expected ticks, lower the threshold
+  // Update microphone diagnostic hint based on measured background level
+  updateMicDiagnosticHint(actualTicks, expectedTicks);
+
+  // Too-loud case: far more ticks than expected → raise threshold to reduce false positives
+  if (actualTicks > expectedTicks * TOO_MANY_TICKS_RATIO && actualTicks > 3) {
+    const prevThreshold = workingThreshold;
+    workingThreshold = Math.min(MAX_THRESHOLD, workingThreshold / THRESHOLD_ADJUST_FACTOR);
+    workingSensitivity = Math.max(MIN_SENSITIVITY, workingSensitivity / SENSITIVITY_ADJUST_FACTOR);
+
+    if (workingThreshold > prevThreshold) {
+      setCalibration(workingSensitivity, workingThreshold, lowCutoff.value, highCutoff.value);
+      audioThreshold.value = workingThreshold;
+      statusMessage.value = `Signal too strong — reducing sensitivity (${actualTicks} detections vs ~${Math.round(expectedTicks)} expected)`;
+      statusMessageType.value = 'warning';
+    }
+    return;
+  }
+
+  // Too-quiet case: fewer than 30% of expected ticks → lower the threshold
   if (actualTicks < expectedTicks * 0.3) {
     const prevThreshold = workingThreshold;
     workingThreshold = Math.max(MIN_THRESHOLD, workingThreshold * THRESHOLD_ADJUST_FACTOR);
@@ -293,11 +328,30 @@ const handleAutoAdjust = () => {
   }
 };
 
+/**
+ * Provide an actionable hint based on the measured background noise level.
+ * Distinguishes "mic system gain too low" (background near silence) from
+ * "clock too far away" (background audible but no tick transients detected).
+ */
+const updateMicDiagnosticHint = (actualTicks: number, expectedTicks: number) => {
+  if (smoothedBackgroundLevel < VERY_LOW_MIC_LEVEL && actualTicks === 0) {
+    micDiagnosticHint.value = '⚠ Microphone level is extremely low. Try increasing microphone gain in your device settings, or use a different microphone (e.g. USB or headset).';
+  } else if (smoothedBackgroundLevel < LOW_MIC_LEVEL && actualTicks < expectedTicks * 0.3) {
+    micDiagnosticHint.value = '⚠ Signal is weak. Try placing the microphone closer to the clock.';
+  } else if (smoothedBackgroundLevel > HIGH_MIC_LEVEL) {
+    micDiagnosticHint.value = '⚠ Signal is very loud. Move the microphone further from the clock, or reduce microphone gain in your device settings.';
+  } else {
+    micDiagnosticHint.value = '';
+  }
+};
+
 const handleStartCalibration = async () => {
   try {
     // Clear any previous status
     statusMessage.value = '';
     audioLevel.value = 0;
+    smoothedBackgroundLevel = 0;
+    micDiagnosticHint.value = '';
     
     // Initialize worklet and WASM if not already done
     try {
@@ -367,6 +421,7 @@ const handleStopCalibration = () => {
   
   // Reset audio level display
   audioLevel.value = 0;
+  micDiagnosticHint.value = '';
   
   statusMessage.value = 'Calibration cancelled.';
   statusMessageType.value = 'warning';
@@ -380,7 +435,16 @@ const handleCalibrationTimeout = () => {
   stopProcessing();
   stopCalibration();
   
-  statusMessage.value = 'No ticks detected within 30 seconds. Please check microphone placement and try again.';
+  micDiagnosticHint.value = '';
+
+  // Provide actionable diagnosis based on the background level measured during calibration
+  if (smoothedBackgroundLevel < VERY_LOW_MIC_LEVEL) {
+    statusMessage.value = 'Microphone level too low. Please increase microphone gain in your device settings, or use a different microphone (e.g. USB or headset microphone).';
+  } else if (smoothedBackgroundLevel < LOW_MIC_LEVEL) {
+    statusMessage.value = 'Clock ticks not detected. Try moving the microphone closer to the clock.';
+  } else {
+    statusMessage.value = 'No ticks detected within 30 seconds. Please check microphone placement and try again.';
+  }
   statusMessageType.value = 'warning';
 };
 
@@ -422,6 +486,7 @@ const handleTickDetected = (event: TickEvent) => {
     // Reset audio level display
     audioLevel.value = 0;
     clearTickFlash();
+    micDiagnosticHint.value = '';
     
     if (success) {
       // Send calibration settings to AudioManager
@@ -443,6 +508,10 @@ const handleVolumeLevel = (level: number, threshold: number) => {
   }
   audioLevel.value = level;
   audioThreshold.value = threshold;
+  // Exponential moving average for background noise level diagnosis
+  // alpha=0.03 → time constant ≈ 33 samples (~3 s at 100 ms per report); reaches ~95% of
+  // steady state after ~100 samples (~10 s), giving a reliable ambient-noise baseline
+  smoothedBackgroundLevel = smoothedBackgroundLevel * 0.97 + level * 0.03;
 };
 
 const navigateToMeasurement = () => {
@@ -782,6 +851,21 @@ section {
 
 .meter-bar-fill.tick-flash {
   background: var(--color-success);
+}
+
+.meter-bar-fill.level-loud {
+  background: var(--color-danger);
+}
+
+.mic-diagnostic-hint {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md, 6px);
+  background: var(--color-warning-light);
+  color: var(--color-warning-dark);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  text-align: left;
 }
 
 .meter-threshold-marker {

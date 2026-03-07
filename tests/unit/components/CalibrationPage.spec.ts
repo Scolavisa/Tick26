@@ -327,8 +327,9 @@ describe('CalibrationPage', () => {
       
       const statusMessage = wrapper.find('.status-message.warning');
       expect(statusMessage.exists()).toBe(true);
-      expect(statusMessage.text()).toContain('30 seconds');
-      expect(statusMessage.text()).toContain('microphone placement');
+      // When no audio volume callbacks fire (smoothedBackgroundLevel stays 0), the diagnostic
+      // identifies a system-level mic gain problem rather than a positioning issue.
+      expect(statusMessage.text()).toContain('Microphone level too low');
     });
 
     it('should not timeout if ticks are being detected', async () => {
