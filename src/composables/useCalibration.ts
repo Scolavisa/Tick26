@@ -16,6 +16,7 @@ import { ref, computed, type Ref } from 'vue';
 import type { ClockSize, CalibrationSettings, ErrorInfo } from '../types';
 import { ErrorCode } from '../types';
 import { logError, createErrorFromCode } from '../utils/errors';
+import { DEBOUNCE_WINDOW_MS } from '../constants';
 
 // Singleton state - shared across all component instances
 let isSharedStateInitialized = false;
@@ -306,6 +307,17 @@ export function useCalibration() {
   });
 
   /**
+   * Get the debounce window (in ms) for the current clock size.
+   * Used to suppress duplicate tick detections caused by mechanical bounce
+   * or acoustic ringing.
+   *
+   * @returns Debounce window in milliseconds
+   */
+  const getDebounceWindowMs = (): number => {
+    return DEBOUNCE_WINDOW_MS[clockSize.value];
+  };
+
+  /**
    * Get expected tick frequency for current clock size
    * Validates: Requirement 2.2
    * 
@@ -355,6 +367,7 @@ export function useCalibration() {
     loadCalibration,
     resetCalibration,
     getExpectedFrequency,
+    getDebounceWindowMs,
     clearError
   };
 }

@@ -180,8 +180,9 @@ export class AudioManager {
    * @param threshold - RMS amplitude threshold (0.01 - 0.5)
    * @param lowCutoff - High-pass edge in Hz (0 = bypass)
    * @param highCutoff - Low-pass edge in Hz (0 = bypass)
+   * @param debounceWindowMs - Duplicate-detection window in milliseconds (optional)
    */
-  setCalibration(sensitivity: number, threshold: number, lowCutoff: number, highCutoff: number): void {
+  setCalibration(sensitivity: number, threshold: number, lowCutoff: number, highCutoff: number, debounceWindowMs?: number): void {
     if (!this.workletNode) {
       console.warn('AudioManager: Cannot set calibration, worklet not loaded');
       return;
@@ -193,7 +194,8 @@ export class AudioManager {
       sensitivity,
       threshold,
       lowCutoff,
-      highCutoff
+      highCutoff,
+      ...(debounceWindowMs !== undefined ? { debounceWindowMs } : {})
     });
   }
 

@@ -113,7 +113,7 @@ const handleStart = async () => {
     }
     
     // Apply calibration settings to AudioManager
-    audio.setCalibration(calibration.sensitivity.value, calibration.threshold.value, calibration.lowCutoff.value, calibration.highCutoff.value)
+    audio.setCalibration(calibration.sensitivity.value, calibration.threshold.value, calibration.lowCutoff.value, calibration.highCutoff.value, calibration.getDebounceWindowMs())
     
     audio.startProcessing()
   } catch (error) {
