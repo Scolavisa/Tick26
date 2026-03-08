@@ -40,7 +40,8 @@ vi.mock('../../../src/composables/useCalibration', () => ({
     highCutoff: { value: 8000 },
     clockSize: { value: 'medium' },
     isCalibrating: { value: false },
-    calibrationProgress: { value: 0 }
+    calibrationProgress: { value: 0 },
+    getDebounceWindowMs: vi.fn(() => 150)
   })
 }))
 

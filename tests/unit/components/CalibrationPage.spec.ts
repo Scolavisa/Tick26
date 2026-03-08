@@ -30,6 +30,7 @@ const mockStopCalibration = vi.fn();
 const mockCompleteCalibration = vi.fn(() => true);
 const mockRecordTickSample = vi.fn();
 const mockGetExpectedFrequency = vi.fn(() => 2.5); // medium clock default
+const mockGetDebounceWindowMs = vi.fn(() => 150); // medium clock default
 
 const mockOnTickDetected = vi.fn();
 const mockOnVolumeLevel = vi.fn();
@@ -54,7 +55,8 @@ vi.mock('../../../src/composables/useCalibration', () => ({
     stopCalibration: mockStopCalibration,
     completeCalibration: mockCompleteCalibration,
     recordTickSample: mockRecordTickSample,
-    getExpectedFrequency: mockGetExpectedFrequency
+    getExpectedFrequency: mockGetExpectedFrequency,
+    getDebounceWindowMs: mockGetDebounceWindowMs
   })
 }));
 

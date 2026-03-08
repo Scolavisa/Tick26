@@ -85,6 +85,9 @@ class TickProcessorWorklet extends AudioWorkletProcessor {
     if (typeof data.highCutoff === 'number') {
       this.highCutoff = data.highCutoff;
     }
+    if (typeof data.debounceWindowMs === 'number' && data.debounceWindowMs > 0) {
+      this.duplicateWindowSamples = Math.floor(this.sampleRate * data.debounceWindowMs / 1000);
+    }
     
     // Acknowledge calibration update
     this.port.postMessage({

@@ -362,10 +362,11 @@ export function useAudio() {
    * @param threshold - RMS amplitude threshold (0.01 - 0.5)
    * @param lowCutoff - High-pass edge in Hz (0 = bypass)
    * @param highCutoff - Low-pass edge in Hz (0 = bypass)
+   * @param debounceWindowMs - Duplicate-detection window in milliseconds
    */
-  const setCalibration = (sensitivity: number, threshold: number, lowCutoff: number, highCutoff: number): void => {
+  const setCalibration = (sensitivity: number, threshold: number, lowCutoff: number, highCutoff: number, debounceWindowMs?: number): void => {
     const manager = getAudioManager();
-    manager.setCalibration(sensitivity, threshold, lowCutoff, highCutoff);
+    manager.setCalibration(sensitivity, threshold, lowCutoff, highCutoff, debounceWindowMs);
   };
 
   /**

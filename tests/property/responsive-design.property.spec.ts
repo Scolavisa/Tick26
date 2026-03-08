@@ -52,7 +52,8 @@ vi.mock('../../src/composables/useCalibration', () => ({
     startCalibration: vi.fn(),
     stopCalibration: vi.fn(),
     completeCalibration: vi.fn(),
-    recordTickSample: vi.fn()
+    recordTickSample: vi.fn(),
+    getDebounceWindowMs: vi.fn(() => 150)
   })
 }))
 

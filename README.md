@@ -188,6 +188,22 @@ Microphone → AudioContext → GainNode → AudioWorklet → WASM Detector → 
 - **Tick Detector (WASM):** High-performance RMS calculation and threshold detection
 - **Composables:** Reactive state management for audio, calibration, counting, and sessions
 
+### Debounce Windows (Bounce Suppression)
+
+After each detected tick the AudioWorklet ignores further detections for a short window to prevent
+mechanical bounce and acoustic ringing of the clock mechanism from being counted as separate ticks.
+The window is sized per clock type so it is always long enough to suppress bounce but still well
+below the shortest possible inter-tick gap:
+
+| Clock size | Expected frequency | Min. inter-tick gap | Debounce window |
+|------------|--------------------|---------------------|-----------------|
+| Small      | ~5.5 Hz            | ~182 ms             | 120 ms          |
+| Medium     | ~2.5 Hz            | ~400 ms             | 150 ms          |
+| Large      | ~0.75 Hz           | ~1333 ms            | 250 ms          |
+
+The values are defined in `src/constants.ts` (`DEBOUNCE_WINDOW_MS`) and can be tuned there if
+real-world testing reveals that a particular clock type still produces bounce.
+
 ## Development Guide
 
 ### Adding New Features

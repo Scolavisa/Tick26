@@ -197,7 +197,8 @@ const {
   stopCalibration,
   completeCalibration,
   recordTickSample,
-  getExpectedFrequency
+  getExpectedFrequency,
+  getDebounceWindowMs
 } = useCalibration();
 
 const {
@@ -355,7 +356,7 @@ const handleAutoAdjust = () => {
     workingSensitivity = Math.max(MIN_SENSITIVITY, workingSensitivity / SENSITIVITY_ADJUST_FACTOR);
 
     if (workingThreshold > prevThreshold) {
-      setCalibration(workingSensitivity, workingThreshold, lowCutoff.value, highCutoff.value);
+      setCalibration(workingSensitivity, workingThreshold, lowCutoff.value, highCutoff.value, getDebounceWindowMs());
       audioThreshold.value = workingThreshold;
       statusMessage.value = `Signal too strong — reducing sensitivity (${actualTicks} detections vs ~${Math.round(expectedTicks)} expected)`;
       statusMessageType.value = 'warning';
@@ -370,7 +371,7 @@ const handleAutoAdjust = () => {
     workingSensitivity = Math.min(MAX_SENSITIVITY, workingSensitivity * SENSITIVITY_ADJUST_FACTOR);
 
     if (workingThreshold < prevThreshold) {
-      setCalibration(workingSensitivity, workingThreshold, lowCutoff.value, highCutoff.value);
+      setCalibration(workingSensitivity, workingThreshold, lowCutoff.value, highCutoff.value, getDebounceWindowMs());
       // Update the threshold marker on the audio level display
       audioThreshold.value = workingThreshold;
       statusMessage.value = `Adjusting sensitivity — heard ${actualTicks} of ~${Math.round(expectedTicks)} expected ticks`;
@@ -425,7 +426,7 @@ const handleStartCalibration = async () => {
     calibrationStartTime = Date.now();
     
     // Apply the sensitive starting parameters to the audio system
-    setCalibration(workingSensitivity, workingThreshold, lowCutoff.value, highCutoff.value);
+    setCalibration(workingSensitivity, workingThreshold, lowCutoff.value, highCutoff.value, getDebounceWindowMs());
     audioThreshold.value = workingThreshold;
     
     // Start audio processing
@@ -544,7 +545,7 @@ const handleTickDetected = (event: TickEvent) => {
     
     if (success) {
       // Send calibration settings to AudioManager
-      setCalibration(sensitivity.value, threshold.value, lowCutoff.value, highCutoff.value);
+      setCalibration(sensitivity.value, threshold.value, lowCutoff.value, highCutoff.value, getDebounceWindowMs());
       console.log('Calibration complete:', { sensitivity: sensitivity.value, threshold: threshold.value, lowCutoff: lowCutoff.value, highCutoff: highCutoff.value });
       
       statusMessage.value = 'Calibration completed successfully! You can now proceed to measurement.';
